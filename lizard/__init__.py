@@ -13,4 +13,5 @@ def _configure_log():
     log.addHandler(console)
     return log
 
+
 LOG = _configure_log()
