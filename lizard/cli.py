@@ -89,7 +89,8 @@ def normalize_args(args):
     }
 
     # call the normalizer for every arg set used
-    for normalizer in [normalizers[arg_set] for arg_set in ARG_SETS]:
+    (_, arg_sets) = SUBCMDS[args.subcmd]
+    for normalizer in [normalizers[arg_set] for arg_set in arg_sets]:
         args = normalizer(args)
         if args is None:
             break

@@ -12,7 +12,7 @@ def run_client(args):
     :returns: 0 on success
     """
     # scan hardware
-    hardware = hardware_discovery.scan_hardware()
+    hardware = hardware_discovery.scan_hardware(args)
     LOG.debug('hardware scan found: %s', hardware)
     lizard_client = client.LizardClient(args, hardware)
     lizard_client.register()
@@ -25,6 +25,7 @@ def run_server(args):
     :args: parsed cmdline args
     :returns: 0 on success
     """
+    server.state.create_state(args)
     server.APP.run(host=args.host, port=args.port, debug=False)
     return 0
 

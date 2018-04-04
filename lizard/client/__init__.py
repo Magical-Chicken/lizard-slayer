@@ -18,7 +18,7 @@ def make_api_req(
     if method == 'GET':
         res = requests.get(url, params=params)
     elif method == 'POST':
-        res = requests.posst(url, json=data, params=params)
+        res = requests.post(url, data=data)
     else:
         raise ValueError('unknown request method')
     if raise_for_status:
@@ -38,10 +38,11 @@ class LizardClient(object):
         self.uuid = None
         self.args = args
         self.hardware = hardware
-        self.server_url = args.addr + ':' + args.port
+        self.server_url = args.addr + ':' + str(args.port)
 
     def register(self):
         """register client with server"""
         res = make_api_req(
-            self.server_url, '/clients/', method='POST', data=self.hardware)
+            self.server_url, '/clients', method='POST',
+            data={'hardware': self.hardware})
         self.uuid = res['uuid']

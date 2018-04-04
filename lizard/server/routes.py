@@ -1,7 +1,8 @@
 from flask import Response, request
 import json
 
-from lizard.server import APP, state_access
+from lizard.server import APP
+from lizard.server import state as server_state
 
 API_MIME_TYPE = 'application/json'
 
@@ -22,7 +23,7 @@ def ruok():
     return 'imok'
 
 
-@APP.route('/clients/', methods=['GET', 'POST'])
+@APP.route('/clients', methods=['GET', 'POST'])
 def clients():
     """
     GET,POST /instances/: register or list clients
@@ -30,7 +31,7 @@ def clients():
     """
     if request.method == 'POST':
         client_hardware = request.form['hardware']
-        with state_access() as state:
+        with server_state.state_access() as state:
             client_uuid = state.register_client(client_hardware)
         return respond_json({'uuid': client_uuid})
     else:
