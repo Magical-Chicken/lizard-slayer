@@ -1,5 +1,6 @@
 import os
 import subprocess
+import uuid
 
 
 def subp(cmd, check=True):
@@ -24,3 +25,8 @@ def construct_sane_url(*args, prefix='http://'):
     res = os.path.join(*(part.lower().strip().lstrip('/') for part in args))
     res = res[next((len(p) for p in prefixes if res.startswith(p)), 0):]
     return prefix + os.path.normpath(res)
+
+
+def hex_uuid():
+    """get a uuid"""
+    return uuid.uuid4().hex

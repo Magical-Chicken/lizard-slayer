@@ -1,9 +1,10 @@
-import json
 import requests
 from lizard import util
 
 
-def make_api_req(server_url, endpoint, params={}, raise_for_status=True):
+def make_api_req(
+        server_url, endpoint, method='GET', data={}, params={},
+        raise_for_status=True):
     """
     make an api request
     :server_url: base url for api server
@@ -14,7 +15,12 @@ def make_api_req(server_url, endpoint, params={}, raise_for_status=True):
     :raises: OSError: if raise_for_status=True and bad response code
     """
     url = util.construct_sane_url(server_url, endpoint)
-    res = requests.get(url, params=params)
+    if method == 'GET':
+        res = requests.get(url, params=params)
+    elif method == 'POST':
+        res = requests.posst(url, json=data, params=params)
+    else:
+        raise ValueError('unknown request method')
     if raise_for_status:
         res.raise_for_status()
     return res.json()
@@ -29,11 +35,13 @@ class LizardClient(object):
         :args: parsed cmdline args
         :hardware: hardware info dict
         """
+        self.uuid = None
         self.args = args
         self.hardware = hardware
         self.server_url = args.addr + ':' + args.port
 
     def register(self):
         """register client with server"""
-        params = {'hardware': json.dumps(self.hardware)}
-        make_api_req(self.server_url, '/register', params=params)
+        res = make_api_req(
+            self.server_url, '/clients/', method='POST', data=self.hardware)
+        self.uuid = res['uuid']
