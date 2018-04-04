@@ -10,3 +10,12 @@ def ruok():
     :returns: flask response
     """
     return 'imok'
+
+
+@APP.route('/register')
+def register():
+    """
+    GET /register: register a client with the server
+    :returns: flask response
+    """
+    raise NotImplementedError

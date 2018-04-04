@@ -2,21 +2,27 @@ import logging
 import sys
 
 from lizard import LOG
-from lizard import cli, server
+from lizard import cli, client, hardware_discovery, server
 
 
 def run_client(args):
     """
     entrypoint for client
+    :args: parsed cmdline args
     :returns: 0 on success
     """
-    raise NotImplementedError
+    # scan hardware
+    hardware = hardware_discovery.scan_hardware()
+    LOG.debug('hardware scan found: %s', hardware)
+    lizard_client = client.LizardClient(args, hardware)
+    lizard_client.register()
     return 0
 
 
 def run_server(args):
     """
     entrypoint for server
+    :args: parsed cmdline args
     :returns: 0 on success
     """
     server.APP.run(host=args.host, port=args.port, debug=False)
