@@ -8,7 +8,7 @@ def check_cpus():
     """
     data = {}
     lscpu_out = util.subp(["lscpu"])[0]
-    for k, v in [l.split(':') for l in lscpu_out.splitlines()]:
+    for k, v in [l.split(':') for l in lscpu_out.splitlines() if ':' in l]:
         data[k.strip()] = v.strip()
     return {'max_threads': int(data['CPU(s)']), 'name': data['Model name']}
 
