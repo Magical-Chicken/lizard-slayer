@@ -35,4 +35,6 @@ def clients():
             client_uuid = state.register_client(client_hardware)
         return respond_json({'uuid': client_uuid})
     else:
-        raise NotImplementedError
+        with server_state.state_access() as state:
+            client_uuids = list(state.clients.keys())
+        return respond_json({'clients': client_uuids})
