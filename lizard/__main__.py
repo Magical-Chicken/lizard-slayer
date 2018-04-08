@@ -14,8 +14,11 @@ def run_client(args):
     # scan hardware
     hardware = hardware_discovery.scan_hardware(args)
     LOG.debug('hardware scan found: %s', hardware)
-    lizard_client = client.LizardClient(args, hardware)
-    lizard_client.register()
+    # create client
+    client.create_client(args, hardware)
+    # register with server
+    with client.client_access() as c:
+        c.register()
     return 0
 
 
@@ -25,7 +28,9 @@ def run_server(args):
     :args: parsed cmdline args
     :returns: 0 on success
     """
+    # create server state
     server.state.create_state(args)
+    # start flask server
     server.APP.run(host=args.host, port=args.port, debug=False)
     return 0
 

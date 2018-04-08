@@ -1,48 +1,30 @@
-import requests
-from lizard import util
+import contextlib
+import flask
+import threading
+
+from lizard.client import lizard_client
+
+APP = flask.Flask(__name__)
+import lizard.client.routes  # NOQA
+
+# global client state object
+CLIENT = None
+CLIENT_LOCK = threading.Lock()
 
 
-def make_api_req(
-        server_url, endpoint, method='GET', data=None, params=None,
-        raise_for_status=True):
+def create_client(args, hardware):
     """
-    make an api request
-    :server_url: base url for api server
-    :endpoint: api endpoint
-    :data: post data dict
-    :params: get parameters
-    :raise_for_status: if true, raise error if status not 200
-    :returns: parsed json data from api endpoint
-    :raises: OSError: if raise_for_status=True and bad response code
+    Create client object
+    :args: parsed cmdline rags
+    :hardware: hardware info dict
     """
-    url = util.construct_sane_url(server_url, endpoint)
-    if method == 'GET':
-        res = requests.get(url, params=params)
-    elif method == 'POST':
-        res = requests.post(url, json=data)
-    else:
-        raise ValueError('unknown request method')
-    if raise_for_status:
-        res.raise_for_status()
-    return res.json()
+    with CLIENT_LOCK:
+        global CLIENT
+        CLIENT = lizard_client.LizardClient(args, hardware)
 
 
-class LizardClient(object):
-    """Main client object"""
-
-    def __init__(self, args, hardware):
-        """
-        Client init
-        :args: parsed cmdline args
-        :hardware: hardware info dict
-        """
-        self.uuid = None
-        self.args = args
-        self.hardware = hardware
-        self.server_url = args.addr + ':' + str(args.port)
-
-    def register(self):
-        """register client with server"""
-        res = make_api_req(
-            self.server_url, '/clients', method='POST', data=self.hardware)
-        self.uuid = res['uuid']
+@contextlib.contextmanager
+def client_access():
+    """contextmanager to provide access to global client"""
+    with CLIENT_LOCK:
+        yield CLIENT
