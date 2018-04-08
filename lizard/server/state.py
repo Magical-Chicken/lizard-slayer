@@ -37,6 +37,10 @@ class ClientState(object):
         self.hardware = hardware
         self.uuid = client_uuid
 
+    @property
+    def properties(self):
+        return {'uuid': self.uuid, 'hardware': self.hardware}
+
 
 class ServerState(object):
     """Object tracking server state"""
@@ -56,6 +60,6 @@ class ServerState(object):
         :returns: client uuid
         """
         client_uuid = util.hex_uuid()
-        self.clients[client_uuid] = ClientState(hardware, client_uuid)
+        self.clients[client_uuid] = ClientState(client_uuid, hardware)
         LOG.info('registered client: %s', client_uuid)
         return client_uuid

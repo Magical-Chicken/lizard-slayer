@@ -3,12 +3,13 @@ from lizard import util
 
 
 def make_api_req(
-        server_url, endpoint, method='GET', data={}, params={},
+        server_url, endpoint, method='GET', data=None, params=None,
         raise_for_status=True):
     """
     make an api request
     :server_url: base url for api server
     :endpoint: api endpoint
+    :data: post data dict
     :params: get parameters
     :raise_for_status: if true, raise error if status not 200
     :returns: parsed json data from api endpoint
@@ -18,7 +19,7 @@ def make_api_req(
     if method == 'GET':
         res = requests.get(url, params=params)
     elif method == 'POST':
-        res = requests.post(url, data=data)
+        res = requests.post(url, json=data)
     else:
         raise ValueError('unknown request method')
     if raise_for_status:
@@ -43,6 +44,5 @@ class LizardClient(object):
     def register(self):
         """register client with server"""
         res = make_api_req(
-            self.server_url, '/clients', method='POST',
-            data={'hardware': self.hardware})
+            self.server_url, '/clients', method='POST', data=self.hardware)
         self.uuid = res['uuid']
