@@ -1,28 +1,4 @@
-import contextlib
-import threading
-
 from lizard import LOG, util
-
-# global server state object
-SERVER_STATE = None
-SERVER_STATE_LOCK = threading.Lock()
-
-
-def create_state(args):
-    """
-    Create server state object
-    :args: parsed cmdline args
-    """
-    with SERVER_STATE_LOCK:
-        global SERVER_STATE
-        SERVER_STATE = ServerState(args)
-
-
-@contextlib.contextmanager
-def state_access():
-    """contextmanager to provide access to global server state"""
-    with SERVER_STATE_LOCK:
-        yield SERVER_STATE
 
 
 class ClientState(object):

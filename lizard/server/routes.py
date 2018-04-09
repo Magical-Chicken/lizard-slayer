@@ -2,7 +2,7 @@ from flask import Response, request
 import json
 
 from lizard.server import APP
-from lizard.server import state as server_state
+from lizard import server
 
 API_MIME_TYPE = 'application/json'
 
@@ -34,11 +34,11 @@ def clients():
     """
     if request.method == 'POST':
         client_hardware = request.get_json()
-        with server_state.state_access() as state:
+        with server.state_access() as state:
             client_uuid = state.register_client(client_hardware)
         return respond_json({'uuid': client_uuid})
     else:
-        with server_state.state_access() as state:
+        with server.state_access() as state:
             client_uuids = list(state.clients.keys())
         return respond_json({'clients': client_uuids})
 
@@ -51,11 +51,11 @@ def client_item(client_id):
     :returns: flask response
     """
     if request.method == 'GET':
-        with server_state.state_access() as state:
+        with server.state_access() as state:
             client = state.clients[client_id]
             client_data = client.properties if client is not None else {}
         return respond_json(client_data, status=200 if client_data else 404)
     elif request.method == 'DELETE':
-        with server_state.state_access() as state:
+        with server.state_access() as state:
             res = state.clients.pop(client_id, None)
         return Response("ok") if res is not None else Response("bad id", 404)

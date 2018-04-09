@@ -29,7 +29,7 @@ def run_server(args):
     :returns: 0 on success
     """
     # create server state
-    server.state.create_state(args)
+    server.create_state(args)
     # start flask server
     server.APP.run(host=args.host, port=args.port, debug=False)
     return 0
