@@ -8,7 +8,6 @@ from lizard.client import lizard_client
 # FIXME FIXME FIXME
 # using flask on the client is temporary for dev purposes only
 APP = flask.Flask(__name__)
-import lizard.client.routes  # NOQA
 
 # global client state object
 CLIENT = None
@@ -38,3 +37,7 @@ def client_access():
     """contextmanager to provide access to global client"""
     with CLIENT_LOCK:
         yield CLIENT
+
+
+# import routes
+import lizard.client.routes  # NOQA

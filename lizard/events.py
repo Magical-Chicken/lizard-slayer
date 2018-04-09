@@ -35,7 +35,7 @@ class BaseEvent(object):
         :data: event data
         """
         self.event_type = event_type
-        self.event_id = util.hex_id()
+        self.event_id = util.hex_uuid()
         self.status = EventStatus.PENDING
         self.result = None
         self.data = data
@@ -70,8 +70,6 @@ def get_event_type_by_name(event_type_name, event_type_class):
     :event_type_name: event type name string
     :returns: instance of ClientEventType or ServerEventType
     """
-    if not isinstance(event_type_class, enum.Enum):
-        raise ValueError("invalid event type class")
     result = event_type_class.INVALID_TYPE
     if event_type_name in (e.value for e in event_type_class):
         result = event_type_class(event_type_name)
