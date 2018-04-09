@@ -1,7 +1,6 @@
 import enum
-import util
 
-from lizard import client, server
+from lizard import client, server, util
 
 
 class EventStatus(enum.Enum):
@@ -11,18 +10,17 @@ class EventStatus(enum.Enum):
     FAILURE = 'failure'
 
 
-class BaseEventType(enum.Enum):
+class ClientEventType(enum.Enum):
     INVALID_TYPE = 'invalid_type'
     REQ_SHUTDOWN = 'req_shutdown'
     REGISTER_PROG = 'register_prog'
-
-
-class ClientEventType(BaseEventType):
     REQ_RUN_PROG = 'req_run_prog'
 
 
-class ServerEventType(BaseEventType):
-    pass
+class ServerEventType(enum.Enum):
+    INVALID_TYPE = 'invalid_type'
+    REQ_SHUTDOWN = 'req_shutdown'
+    REGISTER_PROG = 'register_prog'
 
 
 class BaseEvent(object):
@@ -72,7 +70,7 @@ def get_event_type_by_name(event_type_name, event_type_class):
     :event_type_name: event type name string
     :returns: instance of ClientEventType or ServerEventType
     """
-    if not isinstance(event_type_class, BaseEventType):
+    if not isinstance(event_type_class, enum.Enum):
         raise ValueError("invalid event type class")
     result = event_type_class.INVALID_TYPE
     if event_type_name in (e.value for e in event_type_class):

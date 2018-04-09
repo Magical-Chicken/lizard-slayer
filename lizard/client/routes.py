@@ -8,3 +8,12 @@ def ruok():
     :returns: flask response
     """
     return 'imok'
+
+
+@APP.route('/shutdown')
+def shutdown():
+    """
+    GET /shutdown: schedule client shutdown
+    :returns: flask response
+    """
+    pass
