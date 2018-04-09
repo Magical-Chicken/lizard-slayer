@@ -7,6 +7,8 @@ DESC = 'distributed concurrent data processing platform'
 DEFAULT_PORT_NO = 5000
 DEFAULT_BIND_ADDR = '0.0.0.0'
 
+DEFAULT_HOST_FILE = 'ut_hosts.txt'
+
 ARG_SETS = {
     'CONNECT': (
         (('-p', '--port'),
@@ -26,10 +28,18 @@ ARG_SETS = {
         (('--host',),
          {'help': 'server bind address', 'default': DEFAULT_BIND_ADDR,
           'action': 'store', 'metavar': 'ADDR'}),),
+    'CLUSTER': (
+        (('--file',),
+         {'help': 'server host name file', 'default': DEFAULT_HOST_FILE,
+          'action': 'store', 'metavar': 'FILE_NAME'}),
+        (('--count',),
+         {'help': 'cluster size', 'required': True,
+          'action': 'store', 'type': int, 'metavar': 'INT'}),),
 }
 SUBCMDS = {
     'client': ('run client program', ('CONNECT', 'LOG')),
     'server': ('run server program', ('LOG', 'SERVER')),
+    'cluster': ('run cluster program', ('LOG', 'CLUSTER', 'CONNECT')),
 }
 
 
@@ -86,6 +96,7 @@ def normalize_args(args):
         'CONNECT': _empty_normalizer,
         'LOG': _empty_normalizer,
         'SERVER': _normalize_server_args,
+        'CLUSTER': _empty_normalizer,
     }
 
     # call the normalizer for every arg set used

@@ -5,7 +5,7 @@ import threading
 import queue
 
 from lizard import LOG
-from lizard import cli, client, hardware_discovery, server
+from lizard import cli, client, cluster, hardware_discovery, server
 from lizard.client import client_worker
 
 
@@ -54,12 +54,29 @@ def run_server(args):
     return 0
 
 
+def run_cluster(args):
+    """
+    entrypoint for cluster
+    :args: parsed cmdline args
+    :returns: 0 on success
+    """
+    # create cluster state
+    c = cluster.Cluster(args)
+    # start cluster
+    c.start()
+    return 0
+
+
 def main():
     """
     main entry point
     :returns: 0 on success
     """
-    subcmd_handlers = {'client': run_client, 'server': run_server}
+    subcmd_handlers = {
+        'client': run_client,
+        'server': run_server,
+        'cluster': run_cluster,
+    }
 
     # get the argument parser
     parser = cli.configure_parser()
