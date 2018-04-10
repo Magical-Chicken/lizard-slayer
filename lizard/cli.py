@@ -29,6 +29,9 @@ ARG_SETS = {
          {'help': 'server bind address', 'default': DEFAULT_BIND_ADDR,
           'action': 'store', 'metavar': 'ADDR'}),),
     'CLUSTER': (
+        (('--user',),
+         {'help': 'username for ssh', 'required': True,
+          'action': 'store', 'metavar': 'USERNAME'}),
         (('--file',),
          {'help': 'server host name file', 'default': DEFAULT_HOST_FILE,
           'action': 'store', 'metavar': 'FILE_NAME'}),

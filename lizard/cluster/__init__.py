@@ -1,11 +1,13 @@
+import os
 from subprocess import Popen
 
 from lizard import LOG
 
 NAME = 'lizard-slayer'
 MODULE_NAME = 'lizard'
-USER = 'wlsaidhi'
 END = '.cs.utexas.edu'
+
+DEVNULL = open(os.devnull, 'w')
 
 
 class Cluster(object):
@@ -33,15 +35,31 @@ class Cluster(object):
                 NAME, MODULE_NAME, self.args.port, self.args.addr)
 
         # start ut cluster using ssh
-        for name in self.host_names[-self.args.count:]:
-            args = ['ssh', '-n', USER + '@' + name + END, cmd]
+        for name in self.host_names[:self.args.count]:
+            args = ['ssh', '-n', self.args.user + '@' + name + END, cmd]
             LOG.debug('Popen arguments %s', args)
-            self.nodes[name] = Popen(args)
+            LOG.info('starting node: %s', name)
+            self.nodes[name] = Popen(args, stdout=DEVNULL, stderr=DEVNULL)
+
+        LOG.info('cluster running with %i nodes...', self.args.count)
 
         # wait for cluster to die
-        # for _, p in self.nodes.items():
-            # p.wait()
+        for _, p in self.nodes.items():
+            p.wait()
+
+        # cluster has being termianted by server
+        LOG.info('cluster terminated by server')
 
     def kill(self):
-        """kills cluster"""
-        # FIXME
+        """forcibly terminates cluster"""
+
+        cmd = 'pkill python -c'
+
+        # terminate python programs on the ut cluster using ssh
+        for name in self.host_names[-self.args.count:]:
+            args = ['ssh', '-n', self.args.user + '@' + name + END, cmd]
+            LOG.debug('Popen arguments %s', args)
+            LOG.info('killing node: %s', name)
+            Popen(args, stdout=DEVNULL, stderr=DEVNULL)
+
+        LOG.info('cluster killed')

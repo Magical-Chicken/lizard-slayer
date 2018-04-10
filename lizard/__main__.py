@@ -75,7 +75,10 @@ def run_cluster(args):
     # create cluster state
     c = cluster.Cluster(args)
     # start cluster
-    c.start()
+    try:
+        c.start()
+    except KeyboardInterrupt:
+        c.kill()
     return 0
 
 
