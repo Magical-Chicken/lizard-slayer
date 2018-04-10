@@ -1,4 +1,6 @@
 import argparse
+import os
+
 from lizard import LOG
 
 NAME = 'lizard'
@@ -17,6 +19,13 @@ ARG_SETS = {
         (('-a', '--addr'),
          {'help': 'server address', 'required': True,
           'metavar': 'ADDR', 'action': 'store'}),),
+    'CUDA': (
+        (('-b', '--bin'),
+         {'help': 'path to CUDA tools bin', 'required': False,
+          'metavar': 'PATH', 'action': 'store', 'default': None}),
+        (('-i', '--include'),
+         {'help': 'path to CUDA include dir', 'required': False,
+          'metavar': 'PATH', 'action': 'store', 'default': None}),),
     'LOG': (
         (('-v', '--verbose'),
          {'help': 'enable debug messages', 'action': 'store_true',
@@ -40,7 +49,7 @@ ARG_SETS = {
           'action': 'store', 'type': int, 'metavar': 'INT'}),),
 }
 SUBCMDS = {
-    'client': ('run client program', ('CONNECT', 'LOG')),
+    'client': ('run client program', ('CONNECT', 'CUDA', 'LOG')),
     'server': ('run server program', ('LOG', 'SERVER')),
     'cluster': ('run cluster program', ('LOG', 'CLUSTER', 'CONNECT')),
 }
@@ -90,6 +99,21 @@ def _normalize_server_args(args):
     return args
 
 
+def _normalize_cuda_args(args):
+    """normalize cuda arguments"""
+    if args.bin:
+        args.bin = os.path.abspath(args.bin)
+        if not os.path.isdir(args.bin):
+            LOG.error('invalid bin path specified')
+            return None
+    if args.include:
+        args.include = os.path.abspath(args.include)
+        if not os.path.isdir(args.include):
+            LOG.error('invalid include path specified')
+            return None
+    return args
+
+
 def normalize_args(args):
     """
     normalize parsed arguments
@@ -97,6 +121,7 @@ def normalize_args(args):
     """
     normalizers = {
         'CONNECT': _empty_normalizer,
+        'CUDA': _normalize_cuda_args,
         'LOG': _empty_normalizer,
         'SERVER': _normalize_server_args,
         'CLUSTER': _empty_normalizer,
