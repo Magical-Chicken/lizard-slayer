@@ -7,6 +7,7 @@ import queue
 from lizard import LOG
 from lizard import cli, client, cluster, hardware_discovery, server
 from lizard.client import client_worker
+from lizard.server import server_worker
 
 
 def run_client(args):
@@ -49,8 +50,19 @@ def run_server(args):
     """
     # create server state
     server.create_state(args)
-    # start flask server
-    server.APP.run(host=args.host, port=args.port, debug=False)
+    # start api server
+    call = functools.partial(
+        server.APP.run, debug=False, host=args.host, port=args.port)
+    thread = threading.Thread(target=call)
+    thread.daemon = True
+    thread.start()
+    # start server worker
+    worker = server_worker.ServerWorker()
+    LOG.info('starting server worker')
+    try:
+        worker.run()
+    except queue.Empty:
+        pass
     return 0
 
 

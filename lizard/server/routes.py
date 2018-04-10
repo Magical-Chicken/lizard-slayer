@@ -2,7 +2,7 @@ from flask import Response, request
 import json
 
 from lizard.server import APP
-from lizard import server
+from lizard import server, events
 
 API_MIME_TYPE = 'application/json'
 
@@ -17,6 +17,20 @@ def respond_json(data, status=200):
     return Response(json.dumps(data), status, mimetype=API_MIME_TYPE)
 
 
+def respond_create_event(event_type_name, data):
+    """
+    create event and add to queue
+    :event_type: even ttype name
+    :data: event details
+    :returns: flask response
+    """
+    e_type = events.get_event_type_by_name(
+        event_type_name, events.ServerEventType)
+    event = events.ServerEvent(e_type, data)
+    server.SERVER_QUEUE.put_nowait(event)
+    return respond_json({'event_id': event.event_id})
+
+
 @APP.route('/ruok')
 def ruok():
     """
@@ -24,6 +38,15 @@ def ruok():
     :returns: flask response
     """
     return 'imok'
+
+
+@APP.route('/shutdown')
+def shutdown():
+    """
+    GET /shutdown: schedule client shutdown
+    :returns: flask response
+    """
+    return respond_create_event('req_shutdown', {})
 
 
 @APP.route('/clients', methods=['GET', 'POST'])

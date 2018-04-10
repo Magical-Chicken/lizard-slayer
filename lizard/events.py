@@ -51,6 +51,10 @@ class BaseEvent(object):
             with self.event_map_lock:
                 self.event_map[self.event_id] = self
 
+    def __str__(self):
+        """str repr for event"""
+        return "Event: '{}' Data: {}".format(self.event_type, self.request)
+
 
 class ClientEvent(BaseEvent):
     """Client event"""
