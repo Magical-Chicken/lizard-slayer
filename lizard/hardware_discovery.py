@@ -1,3 +1,5 @@
+import os
+
 from lizard import util
 
 
@@ -19,8 +21,22 @@ def check_gpus(args):
     :args: parsed cmdline args
     :returns: dict with GPU info
     """
-    # FIXME FIXME FIXME
-    return {'gpu_present': False}
+    data = {
+        'gpus_present': 0,
+        'gpus': [],
+    }
+    query_vals = ('name', 'serial', 'index', 'compute_mode', 'memory.total')
+    nvidia_smi_path = os.path.join(args.bin, 'nvidia-smi')
+    nvidia_smi_out = util.subp([
+        nvidia_smi_path, "--format=csv,noheader",
+        "--query-gpu={}".format(','.join(query_vals))])[0]
+    for line in nvidia_smi_out.splitlines():
+        gpu_data = {}
+        for idx, val in enumerate(line.split(',')):
+            gpu_data[query_vals[idx]] = val
+        data['gpus'].append(gpu_data)
+    data['gpus_present'] = len(data['gpus'])
+    return data
 
 
 def scan_hardware(args):
