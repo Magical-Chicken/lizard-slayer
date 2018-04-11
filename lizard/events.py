@@ -53,7 +53,7 @@ class BaseEvent(object):
 
     def __str__(self):
         """str repr for event"""
-        return "Event: '{}' Data: {}".format(self.event_type, self.request)
+        return "Event: '{}' Data: {}".format(self.event_type, self.data)
 
 
 class ClientEvent(BaseEvent):
