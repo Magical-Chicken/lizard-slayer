@@ -1,4 +1,4 @@
-import os
+from py3nvml import py3nvml
 
 from lizard import util
 
@@ -15,27 +15,31 @@ def check_cpus():
     return {'max_threads': int(data['CPU(s)']), 'name': data['Model name']}
 
 
-def check_gpus(args):
+def check_gpus():
     """
     check for CUDA capable GPUs
-    :args: parsed cmdline args
     :returns: dict with GPU info
     """
-    data = {
-        'gpus_present': 0,
-        'gpus': [],
-    }
-    query_vals = ('name', 'serial', 'index', 'compute_mode', 'memory.total')
-    nvidia_smi_path = os.path.join(args.bin, 'nvidia-smi')
-    nvidia_smi_out = util.subp([
-        nvidia_smi_path, "--format=csv,noheader",
-        "--query-gpu={}".format(','.join(query_vals))])[0]
-    for line in nvidia_smi_out.splitlines():
-        gpu_data = {}
-        for idx, val in enumerate(line.split(',')):
-            gpu_data[query_vals[idx]] = val
-        data['gpus'].append(gpu_data)
-    data['gpus_present'] = len(data['gpus'])
+    # NOTE: This fails to get any useful information such as compute level,
+    #       available SMs, or even a good representation of the
+    #       microarchitecture and model number. This information may require
+    #       a new module to be written wrapping C functions to make calls to
+    #       CUDA methods directly. For the time being it may be simpler to
+    #       parse the name string and decode the model number, and use a lookup
+    #       table to retrieve properties for that model
+    data = {'gpus': []}
+    py3nvml.nvmlInit()
+    data['gpus_present'] = py3nvml.nvmlDeviceGetCount()
+    for i in range(data['gpus_present']):
+        handle = py3nvml.nvmlDeviceGetHandleByIndex(0)
+        data['gpus'].append({
+            'index': i,
+            'name': py3nvml.nvmlDeviceGetName(handle),
+            'vram': py3nvml.nvmlDeviceGetMemoryInfo(handle).total,
+            'serial': py3nvml.nvmlDeviceGetSerial(handle),
+            'brand_id': py3nvml.nvmlDeviceGetBrand(handle),
+        })
+    py3nvml.nvmlShutdown()
     return data
 
 
@@ -47,5 +51,5 @@ def scan_hardware(args):
     """
     return {
         'CPU': check_cpus(),
-        'GPU': check_gpus(args),
+        'GPU': check_gpus(),
     }
