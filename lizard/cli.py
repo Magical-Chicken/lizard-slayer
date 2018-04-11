@@ -22,7 +22,10 @@ ARG_SETS = {
     'CUDA': (
         (('-b', '--bin'),
          {'help': 'path to CUDA tools bin', 'required': True,
-          'metavar': 'PATH', 'action': 'store'}),),
+          'metavar': 'PATH', 'action': 'store'}),
+        (('--ignore-cuda',),
+         {'help': 'don\'t query cuda information', 'required': False,
+          'action': 'store_true', 'default': False}),),
     'LOG': (
         (('-v', '--verbose'),
          {'help': 'enable debug messages', 'action': 'store_true',
@@ -98,6 +101,11 @@ def _normalize_server_args(args):
 
 def _normalize_cuda_args(args):
     """normalize cuda arguments"""
+    # use abs path
+    args.bin = os.path.abspath(args.bin)
+    # if ignore cuda, check nothing
+    if args.ignore_cuda:
+        return args
     # check that dir is valid
     if not os.path.isdir(args.bin):
         LOG.error('invalid bin/ path specified')

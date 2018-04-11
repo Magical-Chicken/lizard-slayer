@@ -51,5 +51,5 @@ def scan_hardware(args):
     """
     return {
         'CPU': check_cpus(),
-        'GPU': check_gpus(),
+        'GPU': check_gpus() if not args.ignore_cuda else {'gpus_present': 0},
     }
