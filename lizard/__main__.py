@@ -5,7 +5,7 @@ import threading
 import queue
 
 from lizard import LOG
-from lizard import cli, client, cluster, hardware_discovery, server
+from lizard import cli, client, cluster, hardware_discovery, server, util
 from lizard.client import client_worker
 from lizard.server import server_worker
 
@@ -21,17 +21,17 @@ def run_client(args):
     LOG.debug('hardware scan found: %s', hardware)
     # create client
     client.create_client(args, hardware)
-    # start client api server
-    # FIXME FIXME FIXME FIXME
     # automatically find available port
+    client_port = util.get_free_port()
+    # start client api server
     call = functools.partial(
-        client.APP.run, debug=False, host='0.0.0.0', port=6000)
+        client.APP.run, debug=False, host='0.0.0.0', port=client_port)
     thread = threading.Thread(target=call)
     thread.daemon = True
     thread.start()
     # register with server
     with client.client_access() as c:
-        c.register()
+        c.register(client_port)
     # start client worker
     worker = client_worker.ClientWorker()
     LOG.info('starting client worker')
