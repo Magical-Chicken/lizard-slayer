@@ -9,6 +9,7 @@ def make_api_req(
     make an api request
     :server_url: base url for api server
     :endpoint: api endpoint
+    :method: http method to use, one of GET, POST, DELETE
     :data: post data dict
     :params: get parameters
     :raise_for_status: if true, raise error if status not 200
@@ -21,6 +22,8 @@ def make_api_req(
         res = requests.get(url, params=params)
     elif method == 'POST':
         res = requests.post(url, json=data)
+    elif method == 'DELETE':
+        res = requests.delete(url)
     else:
         raise ValueError('unknown request method')
     if raise_for_status:
@@ -86,3 +89,9 @@ class LizardClient(object):
         }
         res = self.post('/clients', register_data, add_uuid=False)
         self.uuid = res['uuid']
+
+    def shutdown(self):
+        """notify the server that the client is shutting down"""
+        client_url = '/clients/{}'.format(self.uuid)
+        make_api_req(
+            self.server_url, client_url, method='DELETE', expect_json=False)

@@ -38,7 +38,8 @@ def run_client(args):
     try:
         worker.run()
     except queue.Empty:
-        pass
+        with client.client_access() as c:
+            c.shutdown()
     return 0
 
 
