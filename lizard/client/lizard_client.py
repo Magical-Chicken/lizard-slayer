@@ -41,8 +41,16 @@ class LizardClient(object):
         self.hardware = hardware
         self.server_url = args.addr + ':' + str(args.port)
 
-    def register(self):
-        """register client with server"""
+    def register(self, client_port):
+        """
+        register client with server
+        :client_port: port number client has bound to
+        """
+        self.client_port = client_port
+        register_data = {
+            'hardware': self.hardware,
+            'client_port': client_port,
+        }
         res = make_api_req(
-            self.server_url, '/clients', method='POST', data=self.hardware)
+            self.server_url, '/clients', method='POST', data=register_data)
         self.uuid = res['uuid']

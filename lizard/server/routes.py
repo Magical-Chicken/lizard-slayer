@@ -56,9 +56,13 @@ def clients():
     :returns: flask response
     """
     if request.method == 'POST':
-        client_hardware = request.get_json()
+        post_data = request.get_json()
+        client_hardware = post_data['hardware']
+        client_port = post_data['client_port']
+        client_ip = request.remote_addr
         with server.state_access() as state:
-            client_uuid = state.register_client(client_hardware)
+            client_uuid = state.register_client(
+                client_hardware, client_ip, client_port)
         return respond_json({'uuid': client_uuid})
     else:
         with server.state_access() as state:
