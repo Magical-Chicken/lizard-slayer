@@ -1,4 +1,5 @@
 import os
+import requests
 import socket
 import subprocess
 import uuid
@@ -44,3 +45,32 @@ def get_free_port():
         sock.bind(('', 0))
         sock_name = sock.getsockname()
     return sock_name[1]
+
+
+def make_api_req(
+        server_url, endpoint, method='GET', data=None, params=None,
+        raise_for_status=True, expect_json=True):
+    """
+    make an api request
+    :server_url: base url for api server
+    :endpoint: api endpoint
+    :method: http method to use, one of GET, POST, DELETE
+    :data: post data dict
+    :params: get parameters
+    :raise_for_status: if true, raise error if status not 200
+    :expect_json: if true, decode response as json
+    :returns: parsed json data from api endpoint
+    :raises: OSError: if raise_for_status=True and bad response code
+    """
+    url = construct_sane_url(server_url, endpoint)
+    if method == 'GET':
+        res = requests.get(url, params=params)
+    elif method == 'POST':
+        res = requests.post(url, json=data)
+    elif method == 'DELETE':
+        res = requests.delete(url)
+    else:
+        raise ValueError('unknown request method')
+    if raise_for_status:
+        res.raise_for_status()
+    return res.json() if expect_json else res.text

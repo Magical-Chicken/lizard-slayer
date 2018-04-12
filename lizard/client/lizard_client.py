@@ -1,34 +1,4 @@
-import requests
 from lizard import util
-
-
-def make_api_req(
-        server_url, endpoint, method='GET', data=None, params=None,
-        raise_for_status=True, expect_json=True):
-    """
-    make an api request
-    :server_url: base url for api server
-    :endpoint: api endpoint
-    :method: http method to use, one of GET, POST, DELETE
-    :data: post data dict
-    :params: get parameters
-    :raise_for_status: if true, raise error if status not 200
-    :expect_json: if true, decode response as json
-    :returns: parsed json data from api endpoint
-    :raises: OSError: if raise_for_status=True and bad response code
-    """
-    url = util.construct_sane_url(server_url, endpoint)
-    if method == 'GET':
-        res = requests.get(url, params=params)
-    elif method == 'POST':
-        res = requests.post(url, json=data)
-    elif method == 'DELETE':
-        res = requests.delete(url)
-    else:
-        raise ValueError('unknown request method')
-    if raise_for_status:
-        res.raise_for_status()
-    return res.json() if expect_json else res.text
 
 
 class LizardClient(object):
@@ -57,7 +27,7 @@ class LizardClient(object):
         """
         if add_uuid:
             params['client_uuid'] = self.uuid
-        return make_api_req(
+        return util.make_api_req(
             self.server_url, endpoint, method='GET', params=params,
             expect_json=expect_json)
 
@@ -73,7 +43,7 @@ class LizardClient(object):
         """
         if add_uuid:
             data['client_uuid'] = self.uuid
-        return make_api_req(
+        return util.make_api_req(
             self.server_url, endpoint, method='POST', data=data,
             expect_json=expect_json)
 
@@ -93,5 +63,5 @@ class LizardClient(object):
     def shutdown(self):
         """notify the server that the client is shutting down"""
         client_url = '/clients/{}'.format(self.uuid)
-        make_api_req(
+        util.make_api_req(
             self.server_url, client_url, method='DELETE', expect_json=False)
