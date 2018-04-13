@@ -8,6 +8,15 @@ from lizard import LOG
 API_MIME_TYPE = 'application/json'
 
 
+def respond_error(status=500):
+    """
+    Respond with a http error
+    :status: http status code
+    :returns: flask response
+    """
+    return Response("error: {}".format(status), status)
+
+
 def respond_json(data, status=200):
     """
     Respond to a request with a json blob
@@ -87,4 +96,16 @@ def client_item(client_id):
         with server.state_access() as state:
             res = state.clients.pop(client_id, None)
             LOG.info('Deleted client: %s', res)
-        return Response("ok") if res is not None else Response("bad id", 404)
+        return Response("ok") if res is not None else respond_error(404)
+
+
+@APP.route('/events/<event_id>', methods=['GET'])
+def event_item(event_id):
+    """
+    GET /events/<event_id>: query event
+    :event_id: event to return info for
+    :returns: flask response
+    """
+    with server.SERVER_EVENT_MAP_LOCK:
+        event = server.SERVER_EVENT_MAP.get(event_id)
+    return respond_json(event.properties) if event else respond_error(404)

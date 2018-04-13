@@ -51,6 +51,17 @@ class BaseEvent(object):
             with self.event_map_lock:
                 self.event_map[self.event_id] = self
 
+    @property
+    def properties(self):
+        """event properties"""
+        return {
+            'event_id': self.event_id,
+            'type': self.event_type.value,
+            'status': self.status.value,
+            'data': self.data,
+            'result': self.result,
+        }
+
     def __str__(self):
         """str repr for event"""
         return "Event: '{}' Data: {}".format(self.event_type, self.data)
