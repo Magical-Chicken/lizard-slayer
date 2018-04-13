@@ -67,12 +67,14 @@ class ClientState(object):
 class ServerState(object):
     """Object tracking server state"""
 
-    def __init__(self, args):
+    def __init__(self, args, tmpdir):
         """
         ServerState init
         :args: parsed cmdline args
+        :tmpdir: temporary directory
         """
         self.args = args
+        self.tmpdir = tmpdir
         self.clients = {}
 
     def register_client(self, hardware, client_ip, client_port):

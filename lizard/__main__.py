@@ -1,6 +1,7 @@
 import functools
 import logging
 import sys
+import tempfile
 import threading
 import queue
 
@@ -10,17 +11,18 @@ from lizard.client import client_worker
 from lizard.server import server_worker, server_util
 
 
-def run_client(args):
+def run_client(args, tmpdir):
     """
     entrypoint for client
     :args: parsed cmdline args
+    :tmpdir: temporary directory
     :returns: 0 on success
     """
     # scan hardware
     hardware = hardware_discovery.scan_hardware(args)
     LOG.debug('hardware scan found: %s', hardware)
     # create client
-    client.create_client(args, hardware)
+    client.create_client(args, tmpdir, hardware)
     # automatically find available port
     client_port = util.get_free_port()
     # start client api server
@@ -43,14 +45,15 @@ def run_client(args):
     return 0
 
 
-def run_server(args):
+def run_server(args, tmpdir):
     """
     entrypoint for server
     :args: parsed cmdline args
+    :tmpdir: temporary directory
     :returns: 0 on success
     """
     # create server state
-    server.create_state(args)
+    server.create_state(args, tmpdir)
     # start api server
     call = functools.partial(
         server.APP.run, debug=False, host=args.host, port=args.port)
@@ -67,10 +70,11 @@ def run_server(args):
     return 0
 
 
-def run_cluster(args):
+def run_cluster(args, tmpdir):
     """
     entrypoint for cluster
     :args: parsed cmdline args
+    :tmpdir: temporary directory
     :returns: 0 on success
     """
     # create cluster state
@@ -108,8 +112,10 @@ def main():
     LOG.debug('logging system init')
     LOG.debug('running with args: %s', args)
 
-    # exit success
-    return subcmd_handlers[args.subcmd](args)
+    # create tmpdir and run handler
+    with tempfile.TemporaryDirectory(prefix='lizard-slayer-') as tmpdir:
+        LOG.info('Using tmpdir: %s', tmpdir)
+        return subcmd_handlers[args.subcmd](args, tmpdir)
 
 
 if __name__ == "__main__":

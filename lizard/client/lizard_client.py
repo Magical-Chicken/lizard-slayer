@@ -4,14 +4,16 @@ from lizard import util
 class LizardClient(object):
     """Main client object"""
 
-    def __init__(self, args, hardware):
+    def __init__(self, args, tmpdir, hardware):
         """
         Client init
         :args: parsed cmdline args
+        :tmpdir: temporary directory
         :hardware: hardware info dict
         """
         self.uuid = None
         self.args = args
+        self.tmpdir = tmpdir
         self.hardware = hardware
         self.server_url = args.addr + ':' + str(args.port)
 

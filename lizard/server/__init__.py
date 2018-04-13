@@ -20,14 +20,15 @@ SERVER_EVENT_MAP_LOCK = threading.Lock()
 SERVER_QUEUE = queue.Queue()
 
 
-def create_state(args):
+def create_state(args, tmpdir):
     """
     Create server state object
     :args: parsed cmdline args
+    :tmpdir: temporary directory
     """
     with SERVER_STATE_LOCK:
         global SERVER_STATE
-        SERVER_STATE = state.ServerState(args)
+        SERVER_STATE = state.ServerState(args, tmpdir)
 
 
 @contextlib.contextmanager
