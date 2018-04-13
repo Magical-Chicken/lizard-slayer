@@ -7,7 +7,7 @@ import queue
 from lizard import LOG
 from lizard import cli, client, cluster, hardware_discovery, server, util
 from lizard.client import client_worker
-from lizard.server import server_worker
+from lizard.server import server_worker, server_util
 
 
 def run_client(args):
@@ -63,7 +63,7 @@ def run_server(args):
     try:
         worker.run()
     except queue.Empty:
-        pass
+        server_util.shutdown_all_clients()
     return 0
 
 

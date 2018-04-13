@@ -15,7 +15,7 @@ class ClientState(object):
         self.uuid = client_uuid
         self.url = url
 
-    def get(self, endpoint, params, expect_json=True):
+    def get(self, endpoint, params=None, expect_json=True):
         """
         make a GET request to this client
         :endpoint: client api endpoint
@@ -59,6 +59,10 @@ class ClientState(object):
             'url': self.url,
         }
 
+    def __str__(self):
+        """ClientState string representation"""
+        return "Client ID: {} URL: {}".format(self.uuid, self.url)
+
 
 class ServerState(object):
     """Object tracking server state"""
@@ -82,10 +86,10 @@ class ServerState(object):
         client_uuid = util.hex_uuid()
         url = 'http://{}:{}'.format(client_ip, client_port)
         self.clients[client_uuid] = ClientState(client_uuid, hardware, url)
-        LOG.info('registered client: %s at %s', client_uuid, url)
+        LOG.info('Registered client: %s', self.clients[client_uuid])
         return client_uuid
 
-    def get_all(self, endpoint, params, expect_json=True):
+    def get_all(self, endpoint, params=None, expect_json=True):
         """
         make a GET request to all clients, does not raise for bad status code
         :endpoint: client api endpoint
@@ -95,7 +99,7 @@ class ServerState(object):
         """
         res_success = {}
         failed_clients = []
-        for client_uuid, client in self.clients:
+        for client_uuid, client in self.clients.items():
             try:
                 res = client.get(endpoint, params, expect_json=expect_json)
                 res_success[client_uuid] = res
@@ -113,7 +117,7 @@ class ServerState(object):
         """
         res_success = {}
         failed_clients = []
-        for client_uuid, client in self.clients:
+        for client_uuid, client in self.clients.items():
             try:
                 res = client.post(endpoint, data, expect_json=expect_json)
                 res_success[client_uuid] = res
@@ -129,7 +133,7 @@ class ServerState(object):
         """
         success_clients = []
         failed_clients = []
-        for client_uuid, client in self.clients:
+        for client_uuid, client in self.clients.items():
             try:
                 client.delete(endpoint)
                 success_clients.append(client_uuid)

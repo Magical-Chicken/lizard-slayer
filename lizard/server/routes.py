@@ -3,6 +3,7 @@ import json
 
 from lizard.server import APP
 from lizard import server, events
+from lizard import LOG
 
 API_MIME_TYPE = 'application/json'
 
@@ -85,4 +86,5 @@ def client_item(client_id):
     elif request.method == 'DELETE':
         with server.state_access() as state:
             res = state.clients.pop(client_id, None)
+            LOG.info('Deleted client: %s', res)
         return Response("ok") if res is not None else Response("bad id", 404)
