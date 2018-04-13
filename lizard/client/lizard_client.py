@@ -15,7 +15,7 @@ class LizardClient(object):
         self.hardware = hardware
         self.server_url = args.addr + ':' + str(args.port)
 
-    def get(self, endpoint, params, expect_json=True, add_uuid=True):
+    def get(self, endpoint, params=None, expect_json=True, add_uuid=True):
         """
         make a GET request to the server, auto add client uuid to params
         :endpoint: server api endpoint
