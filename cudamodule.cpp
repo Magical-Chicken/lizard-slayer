@@ -128,7 +128,7 @@ static PyTypeObject CustomType = {
 static PyObject *cuda_hi(PyObject *self, CustomObject *arg) {
     printf("hello world!\n");
     //printf("In c: %s %s %i\n", PyUnicode_AsUTF8(arg->first), PyUnicode_AsUTF8(arg->last), arg->number);
-    test();
+    aggregate();
     return Py_None;
 }
 

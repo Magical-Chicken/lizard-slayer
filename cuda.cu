@@ -1,13 +1,17 @@
 #include <stdio.h>
 #include "cuda.h"
 
-static __global__ void testkernel() {
-    printf("hello from kernel\n");
+static launch_kernel(int Dg, int Db, int Ns, void *kernel) {
+    kernel<<<Dg, Db, Ns>>>();
 }
 
-int test() {
+static __global__ void aggregate_kernel() {
+    printf("hello from aggregate kernel\n");
+}
+
+int aggregate(int Dg, int Db, int Ns,) {
     printf("hello from cuda\n");
-    testkernel<<<1, 1>>>();
+    launch_kernel(1, 1, 0, aggregate_kernel);
     cudaDeviceSynchronize();
     return 0;
 }

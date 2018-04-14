@@ -1,6 +1,6 @@
-#ifndef SHARED_H__
-#define SHARED_H__
-int test();
+#ifndef CUDA_H__
+#define CUDA_H__
+int aggregate();
 #endif
 
 
