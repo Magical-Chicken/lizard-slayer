@@ -8,6 +8,7 @@ from lizard import LOG
 from lizard import cli, client, cluster, hardware_discovery, server, util
 from lizard.client import client_worker
 from lizard.server import server_worker, server_util
+from lizard import cuda
 
 
 def run_client(args):
@@ -88,6 +89,13 @@ def main():
     main entry point
     :returns: 0 on success
     """
+    import array
+    a =  array.array('d', [1,2,3,6])
+    for i in a: print(i)
+    print(a)
+    # cuda.test(a)
+    cuda.aggregate(a, Dg=1, Db=32, Ns=0)
+    for i in a: print(i)
     subcmd_handlers = {
         'client': run_client,
         'server': run_server,

@@ -125,15 +125,50 @@ static PyTypeObject CustomType = {
     Custom_new,                 /* tp_new */
 };
 
-static PyObject *cuda_hi(PyObject *self, CustomObject *arg) {
+static PyObject *cuda_test(PyObject *self, PyObject *arg) {
     printf("hello world!\n");
     //printf("In c: %s %s %i\n", PyUnicode_AsUTF8(arg->first), PyUnicode_AsUTF8(arg->last), arg->number);
-    aggregate();
+
+    Py_buffer view;
+    int r = PyObject_GetBuffer(arg, &view, 0);
+    printf("result: %i\n", r);
+    for (int i = 0; i< 3; i++) {
+        printf("%lf\n", ((double*)view.buf)[i]);
+        ((double *)view.buf)[i] = 122.2;
+    }
+    type res = aggregate(view.buf, view.len, view.itemsize, 1, 1, 0);
+    printf("result: %lf\n",res);
+    return Py_None;
+}
+
+static PyObject *cuda_aggregate(PyObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *data = NULL;
+    Py_buffer view;
+    int Dg, Db, Ns;
+    printf("hi\n");
+
+    static char *kwlist[] = {"data", "Dg", "Db", "Ns", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|iii", kwlist,
+                &data, &Dg, &Db, &Ns))
+        return NULL;
+
+    if(PyObject_GetBuffer(data, &view, 0) != 0)
+        return NULL;
+
+
+    printf("%li\n", view.len);
+    printf("%i, %i, %i\n", Dg, Db, Ns);
+    type res = aggregate(view.buf, view.len, view.itemsize, Dg, Db, Ns);
+    printf("result: %lf\n",res);
+    return Py_None;
     return Py_None;
 }
 
 static PyMethodDef CudaMethods[] = {
-    {"hi",  (PyCFunction)cuda_hi, METH_O, "Execute a shell command."},
+    {"test",  (PyCFunction)cuda_test, METH_O, "Execute a shell command."},
+    {"aggregate",  (PyCFunction)cuda_aggregate, METH_VARARGS|METH_KEYWORDS, 
+        "Perform aggregate on GPU."},
     {NULL, NULL, 0, NULL}
 };
 
