@@ -145,7 +145,7 @@ static PyObject *cuda_aggregate(PyObject *self, PyObject *args, PyObject *kwds) 
     PyObject *data = NULL;
     Py_buffer view;
     int Dg, Db, Ns;
-    printf("hi\n");
+    printf("cuda_aggregate\n");
 
     static char *kwlist[] = {"data", "Dg", "Db", "Ns", NULL};
 
@@ -157,12 +157,11 @@ static PyObject *cuda_aggregate(PyObject *self, PyObject *args, PyObject *kwds) 
         return NULL;
 
 
-    printf("%li\n", view.len);
-    printf("%i, %i, %i\n", Dg, Db, Ns);
+    //printf("%li\n", view.len);
+    //printf("%i, %i, %i\n", Dg, Db, Ns);
     type res = aggregate(view.buf, view.len, view.itemsize, Dg, Db, Ns);
-    printf("result: %lf\n",res);
-    return Py_None;
-    return Py_None;
+    //printf("result: %lf\n",res);
+    return Py_BuildValue("d", res);
 }
 
 static PyMethodDef CudaMethods[] = {

@@ -15,7 +15,7 @@ static void launch_kernel(int Dg, int Db, int Ns, void (*kernel)()) {
 
 
 static __global__ void aggregate_kernel(void *buf, long count, void *result) {
-    printf("hello from aggregate kernel\n");
+    /*printf("hello from aggregate kernel\n");*/
     long index = threadIdx.x + blockIdx.x * blockDim.x;
 
     // FIXME 

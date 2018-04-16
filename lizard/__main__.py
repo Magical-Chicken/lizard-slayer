@@ -94,7 +94,8 @@ def main():
     for i in a: print(i)
     print(a)
     # cuda.test(a)
-    cuda.aggregate(a, Dg=1, Db=32, Ns=0)
+    res = cuda.aggregate(a, Dg=1, Db=32, Ns=0)
+    print("res: ",  res)
     for i in a: print(i)
     subcmd_handlers = {
         'client': run_client,
