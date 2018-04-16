@@ -89,9 +89,9 @@ def client_item(client_id):
     """
     if request.method == 'GET':
         with server.state_access() as state:
-            client = state.clients[client_id]
-            client_data = client.properties if client is not None else {}
-        return respond_json(client_data, status=200 if client_data else 404)
+            client = state.clients.get(client_id)
+        return (respond_json(client.properties) if client else
+                respond_error(404))
     elif request.method == 'DELETE':
         with server.state_access() as state:
             res = state.clients.pop(client_id, None)

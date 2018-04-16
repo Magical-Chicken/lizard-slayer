@@ -1,8 +1,9 @@
-from flask import Response
+from flask import Response, request
 import json
 
 from lizard.client import APP
 from lizard import client, events
+from lizard import LOG
 
 API_MIME_TYPE = 'application/json'
 
@@ -56,6 +57,47 @@ def shutdown():
     :returns: flask response
     """
     return respond_create_event('req_shutdown', {})
+
+
+@APP.route('/programs', methods=['GET', 'POST'])
+def programs():
+    """
+    GET,POST /programs: register or list programs
+    :returns: flask response
+    """
+    if request.method == 'POST':
+        post_data = request.get_json()
+        prog_name = post_data['name']
+        prog_code = post_data['code']
+        prog_checksum = post_data['checksum']
+        with client.client_access() as c:
+            try:
+                c.register_program(prog_name, prog_checksum, prog_code)
+            except ValueError:
+                return respond_error(400)
+        return Response("ok")
+    else:
+        with client.client_access() as c:
+            prog_hashes = list(c.user_programs.keys())
+        return respond_json({'programs': prog_hashes})
+
+
+@APP.route('/programs/<prog_hash>', methods=['GET', 'DELETE'])
+def program_item(prog_hash):
+    """
+    GET,DELETE /programs/<prog_hash>: query programs
+    :prog_hash: program checksum/identifier
+    :returns: flask response
+    """
+    if request.method == 'GET':
+        with client.client_access() as c:
+            prog = c.user_programs.get(prog_hash)
+        return respond_json(prog.properties) if prog else respond_error(404)
+    elif request.method == 'DELETE':
+        with client.client_access() as c:
+            res = c.user_programs.pop(prog_hash, None)
+            LOG.info('Deleted user program: %s', res)
+        return Response("ok") if res is not None else respond_error(404)
 
 
 @APP.route('/events/<event_id>', methods=['GET'])

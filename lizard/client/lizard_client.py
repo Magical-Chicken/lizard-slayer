@@ -1,4 +1,6 @@
-from lizard import util
+import os
+
+from lizard import util, user_prog
 
 
 class LizardClient(object):
@@ -11,11 +13,14 @@ class LizardClient(object):
         :tmpdir: temporary directory
         :hardware: hardware info dict
         """
+        self.user_programs = {}
         self.uuid = None
         self.args = args
         self.tmpdir = tmpdir
         self.hardware = hardware
         self.server_url = args.addr + ':' + str(args.port)
+        self.user_progs_dir = os.path.join(self.tmpdir, 'user_progs')
+        os.mkdir(self.user_progs_dir)
 
     def get(self, endpoint, params=None, expect_json=True, add_uuid=True):
         """
@@ -61,6 +66,23 @@ class LizardClient(object):
         }
         res = self.post('/clients', register_data, add_uuid=False)
         self.uuid = res['uuid']
+
+    def register_program(self, name, checksum, code):
+        """
+        register a user program with the client
+        :name: human readable program name
+        :checksum: checksum of code file, and id key
+        :code: program code
+        :raises: ValueError: if program data does not match checksum
+        """
+        prog_dir = os.path.join(self.user_progs_dir, checksum)
+        code_file = os.path.join(prog_dir, user_prog.KERNEL_FILENAME)
+        os.mkdir(prog_dir)
+        with open(code_file, 'r') as fp:
+            fp.write(code)
+        program = user_prog.UserProg(name, checksum, code_file)
+        program.verify_checksum()
+        self.user_programs[checksum] = program
 
     def shutdown(self):
         """notify the server that the client is shutting down"""

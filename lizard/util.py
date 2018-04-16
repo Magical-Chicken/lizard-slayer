@@ -1,3 +1,4 @@
+import hashlib
 import os
 import requests
 import socket
@@ -33,6 +34,16 @@ def construct_sane_url(*args, prefix='http://'):
 def hex_uuid():
     """get a uuid"""
     return uuid.uuid4().hex
+
+
+def checksum(data):
+    """
+    calculate checksum of data
+    :data: bytes object or str
+    """
+    if isinstance(data, str):
+        data = data.encode()
+    return hashlib.sha1(data).hexdigest()
 
 
 def get_free_port():
