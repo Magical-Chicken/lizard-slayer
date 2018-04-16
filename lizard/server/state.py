@@ -1,4 +1,7 @@
-from lizard import LOG, util
+import os
+
+from lizard import LOG
+from lizard import util, user_prog
 
 
 class ClientState(object):
@@ -11,6 +14,7 @@ class ClientState(object):
         :hardware: hardware info dict
         :url: url of client
         """
+        self.registered_progs = []
         self.hardware = hardware
         self.uuid = client_uuid
         self.url = url
@@ -63,6 +67,21 @@ class ClientState(object):
         """ClientState string representation"""
         return "Client ID: {} URL: {}".format(self.uuid, self.url)
 
+    def register_program(self, name, checksum, code):
+        """
+        register a user program with the client
+        :name: human readable program name
+        :checksum: checksum of code file, and id key
+        :code: program code
+        """
+        data = {
+            'name': name,
+            'code': code,
+            'checksum': checksum,
+        }
+        self.post('/programs', data, expect_json=False)
+        self.registered_progs.append(checksum)
+
 
 class ServerState(object):
     """Object tracking server state"""
@@ -76,6 +95,9 @@ class ServerState(object):
         self.args = args
         self.tmpdir = tmpdir
         self.clients = {}
+        self.registered_progs = {}
+        self.user_progs_dir = os.path.join(self.tmpdir, 'user_progs_raw')
+        os.mkdir(self.user_progs_dir)
 
     def register_client(self, hardware, client_ip, client_port):
         """
@@ -90,6 +112,23 @@ class ServerState(object):
         self.clients[client_uuid] = ClientState(client_uuid, hardware, url)
         LOG.info('Registered client: %s', self.clients[client_uuid])
         return client_uuid
+
+    def register_program(self, name, checksum, code):
+        """
+        register a user program with the client
+        :name: human readable program name
+        :checksum: checksum of code file, and id key
+        :code: program code
+        """
+        # FIXME FIXME FIXME
+        # handle errors if clients fail to register
+        for client_uuid, client in self.clients.items():
+            client.register_program(name, checksum, code)
+        code_file = os.path.join(self.user_progs_dir, checksum)
+        with open(code_file, 'r') as fp:
+            fp.write(code)
+        self.registered_progs[checksum] = user_prog.UserProg(
+            name, checksum, code_file)
 
     def get_all(self, endpoint, params=None, expect_json=True):
         """
