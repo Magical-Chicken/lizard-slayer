@@ -5,7 +5,7 @@
 extern "C" {
     
 // FIXME FIXME FIXME 
-// This is only an exmaple of type extension that calls into a trivial cuda
+// This is only an exmaple of TYPE extension that calls into a trivial cuda
 // kernel
 typedef struct {
     PyObject_HEAD
@@ -136,7 +136,7 @@ static PyObject *cuda_test(PyObject *self, PyObject *arg) {
         printf("%lf\n", ((double*)view.buf)[i]);
         ((double *)view.buf)[i] = 122.2;
     }
-    type res = aggregate(view.buf, view.len, view.itemsize, 1, 1, 0);
+    TYPE res = aggregate(view.buf, view.len, view.itemsize, 1, 1, 0);
     printf("result: %lf\n",res);
     return Py_None;
 }
@@ -159,7 +159,7 @@ static PyObject *cuda_aggregate(PyObject *self, PyObject *args, PyObject *kwds) 
 
     //printf("%li\n", view.len);
     //printf("%i, %i, %i\n", Dg, Db, Ns);
-    type res = aggregate(view.buf, view.len, view.itemsize, Dg, Db, Ns);
+    TYPE res = aggregate(view.buf, view.len, view.itemsize, Dg, Db, Ns);
     //printf("result: %lf\n",res);
     return Py_BuildValue("d", res);
 }
