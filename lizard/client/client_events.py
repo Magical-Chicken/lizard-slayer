@@ -1,6 +1,7 @@
 import enum
+import os
 
-from lizard import client, events
+from lizard import client, events, user_prog
 
 
 class ClientEventType(enum.Enum):
@@ -12,12 +13,29 @@ class ClientEventType(enum.Enum):
 
 def handle_event_register_prog(event):
     """
-    handle a register program event
+    handle 'register_prog' event
+    data must include 'name', 'checksum' and 'code'
     :event: event to handle
     :returns: event result data if event sucessfully handled
-    :raises: Exception: if error occurs handling event
+    :raises: ValueError: if program data does not match checksum
     """
-    raise NotImplementedError
+    code = event.data['code']
+    name = event.data['name']
+    checksum = event.data['checksum']
+    with client.client_access() as c:
+        user_progs_dir = c.user_progs_dir
+    prog_dir = os.path.join(user_progs_dir, checksum)
+    code_file = os.path.join(prog_dir, user_prog.KERNEL_FILENAME)
+    os.mkdir(prog_dir)
+    with open(code_file, 'r') as fp:
+        fp.write(code)
+    program = user_prog.UserProg(name, checksum, code_file)
+    program.verify_checksum()
+    # FIXME FIXME FIXME
+    # set up program build dir and compile it
+    with client.client_access() as c:
+        c.user_programs[checksum] = program
+    return {}
 
 
 CLIENT_EVENT_HANDLER_MAP = {

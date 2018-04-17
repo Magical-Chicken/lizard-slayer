@@ -67,16 +67,10 @@ def programs():
     :returns: flask response
     """
     if request.method == 'POST':
-        post_data = request.get_json()
-        prog_name = post_data['name']
-        prog_code = post_data['code']
-        prog_checksum = post_data['checksum']
-        with client.client_access() as c:
-            try:
-                c.register_program(prog_name, prog_checksum, prog_code)
-            except ValueError:
-                return respond_error(400)
-        return Response("ok")
+        event_data = request.get_json()
+        if not all(n in event_data for n in ('name', 'code', 'checksum')):
+            return respond_error(400)
+        return respond_create_event('register_prog', event_data)
     else:
         with client.client_access() as c:
             prog_hashes = list(c.user_programs.keys())

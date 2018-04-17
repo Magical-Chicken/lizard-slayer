@@ -1,6 +1,6 @@
 import os
 
-from lizard import util, user_prog
+from lizard import util
 
 
 class LizardClient(object):
@@ -66,23 +66,6 @@ class LizardClient(object):
         }
         res = self.post('/clients', register_data, add_uuid=False)
         self.uuid = res['uuid']
-
-    def register_program(self, name, checksum, code):
-        """
-        register a user program with the client
-        :name: human readable program name
-        :checksum: checksum of code file, and id key
-        :code: program code
-        :raises: ValueError: if program data does not match checksum
-        """
-        prog_dir = os.path.join(self.user_progs_dir, checksum)
-        code_file = os.path.join(prog_dir, user_prog.KERNEL_FILENAME)
-        os.mkdir(prog_dir)
-        with open(code_file, 'r') as fp:
-            fp.write(code)
-        program = user_prog.UserProg(name, checksum, code_file)
-        program.verify_checksum()
-        self.user_programs[checksum] = program
 
     def shutdown(self):
         """notify the server that the client is shutting down"""

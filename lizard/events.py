@@ -45,7 +45,7 @@ class BaseEvent(object):
             msg = repr(e)
             LOG.warning("Failed to complete event: %s error: %s", self, msg)
             self.status = EventStatus.FAILURE
-            self.result = {'status': 'failure', 'error': msg}
+            self.result = {'error': msg}
 
     def _register_event(self):
         """
@@ -60,7 +60,17 @@ class BaseEvent(object):
 
     @property
     def properties(self):
-        """event properties"""
+        """event properties, not including data which may be very large"""
+        return {
+            'event_id': self.event_id,
+            'type': self.event_type.value,
+            'status': self.status.value,
+            'result': self.result,
+        }
+
+    @property
+    def full_properties(self):
+        """full event properties including data"""
         return {
             'event_id': self.event_id,
             'type': self.event_type.value,
