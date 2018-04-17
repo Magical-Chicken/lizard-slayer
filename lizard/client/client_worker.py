@@ -1,6 +1,6 @@
 from lizard import LOG
 from lizard.client import CLIENT_QUEUE
-from lizard.events import ClientEventType
+from lizard.client.client_events import ClientEventType
 
 
 class ClientWorker(object):

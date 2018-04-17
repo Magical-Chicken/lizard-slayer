@@ -1,6 +1,6 @@
 from lizard import LOG
 from lizard.server import SERVER_QUEUE
-from lizard.events import ServerEventType
+from lizard.server.server_events import ServerEventType
 
 
 class ServerWorker(object):

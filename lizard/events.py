@@ -1,6 +1,6 @@
 import enum
 
-from lizard import client, server, util
+from lizard import util
 
 
 class EventStatus(enum.Enum):
@@ -8,19 +8,6 @@ class EventStatus(enum.Enum):
     RUNNING = 'running'
     SUCCESS = 'success'
     FAILURE = 'failure'
-
-
-class ClientEventType(enum.Enum):
-    INVALID_TYPE = 'invalid_type'
-    REQ_SHUTDOWN = 'req_shutdown'
-    REGISTER_PROG = 'register_prog'
-    REQ_RUN_PROG = 'req_run_prog'
-
-
-class ServerEventType(enum.Enum):
-    INVALID_TYPE = 'invalid_type'
-    REQ_SHUTDOWN = 'req_shutdown'
-    REGISTER_PROG = 'register_prog'
 
 
 class BaseEvent(object):
@@ -65,18 +52,6 @@ class BaseEvent(object):
     def __str__(self):
         """str repr for event"""
         return "Event: '{}' Data: {}".format(self.event_type, self.data)
-
-
-class ClientEvent(BaseEvent):
-    """Client event"""
-    event_map = client.CLIENT_EVENT_MAP
-    event_map_lock = client.CLIENT_EVENT_MAP_LOCK
-
-
-class ServerEvent(BaseEvent):
-    """Server event"""
-    event_map = server.SERVER_EVENT_MAP
-    event_map_lock = server.SERVER_EVENT_MAP_LOCK
 
 
 def get_event_type_by_name(event_type_name, event_type_class):

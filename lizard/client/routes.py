@@ -2,6 +2,7 @@ from flask import Response, request
 import json
 
 from lizard.client import APP
+from lizard.client import client_events
 from lizard import client, events
 from lizard import LOG
 
@@ -35,8 +36,8 @@ def respond_create_event(event_type_name, data):
     :returns: flask response
     """
     e_type = events.get_event_type_by_name(
-        event_type_name, events.ClientEventType)
-    event = events.ClientEvent(e_type, data)
+        event_type_name, client_events.ClientEventType)
+    event = client_events.ClientEvent(e_type, data)
     client.CLIENT_QUEUE.put_nowait(event)
     return respond_json({'event_id': event.event_id})
 
