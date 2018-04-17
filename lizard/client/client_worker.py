@@ -20,7 +20,7 @@ class ClientWorker(object):
         if event.event_type == ClientEventType.REQ_SHUTDOWN:
             self.shutdown_scheduled = True
         else:
-            raise NotImplementedError
+            event.handle()
 
     def run(self):
         """

@@ -20,7 +20,7 @@ class ServerWorker(object):
         if event.event_type == ServerEventType.REQ_SHUTDOWN:
             self.shutdown_scheduled = True
         else:
-            raise NotImplementedError
+            event.handle()
 
     def run(self):
         """

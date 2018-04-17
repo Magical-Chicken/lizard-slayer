@@ -1,5 +1,6 @@
 import enum
 
+from lizard import LOG
 from lizard import util
 
 
@@ -14,6 +15,7 @@ class BaseEvent(object):
     """Base event type"""
     event_map = None
     event_map_lock = None
+    event_handler_map = None
 
     def __init__(self, event_type, data):
         """
@@ -26,6 +28,24 @@ class BaseEvent(object):
         self.status = EventStatus.PENDING
         self.result = None
         self.data = data
+
+    def handle(self):
+        """
+        Handle event using handler defined in event handler map and set result
+        """
+        if self.event_handler_map is None:
+            raise NotImplementedError("Cannot handle BaseEvent")
+        handler = self.event_handler_map.get(
+            self.event_type, handler_not_implemented)
+        try:
+            self.status = EventStatus.RUNNING
+            self.result = handler(self)
+            self.status = EventStatus.SUCCESS
+        except Exception as e:
+            msg = repr(e)
+            LOG.warning("Failed to complete event: %s error: %s", self, msg)
+            self.status = EventStatus.FAILURE
+            self.result = {'status': 'failure', 'error': msg}
 
     def _register_event(self):
         """
@@ -64,3 +84,13 @@ def get_event_type_by_name(event_type_name, event_type_class):
     if event_type_name in (e.value for e in event_type_class):
         result = event_type_class(event_type_name)
     return result
+
+
+def handler_not_implemented(event):
+    """
+    placeholder event handler
+    :event: event to handle
+    :returns: event result data if event sucessfully handled
+    :raises: Exception: if error occurs handling event
+    """
+    raise NotImplementedError("No event handler for event: {}".format(event))
