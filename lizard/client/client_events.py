@@ -28,7 +28,7 @@ def handle_event_register_prog(event):
     prog_dir = os.path.join(user_progs_dir, checksum)
     code_file = os.path.join(prog_dir, user_prog.KERNEL_FILENAME)
     os.mkdir(prog_dir)
-    with open(code_file, 'r') as fp:
+    with open(code_file, 'w') as fp:
         fp.write(code)
     program = user_prog.UserProg(name, checksum, code_file)
     program.verify_checksum()

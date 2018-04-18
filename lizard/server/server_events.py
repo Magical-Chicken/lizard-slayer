@@ -25,7 +25,7 @@ def handle_event_register_prog(event):
     with server.state_access() as s:
         user_progs_dir = s.user_progs_dir
     code_file = os.path.join(user_progs_dir, checksum)
-    with open(code_file, 'r') as fp:
+    with open(code_file, 'w') as fp:
         fp.write(code)
     program = user_prog.UserProg(name, checksum, code_file)
     with server.state_access() as s:
