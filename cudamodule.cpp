@@ -164,10 +164,54 @@ static PyObject *cuda_aggregate(PyObject *self, PyObject *args, PyObject *kwds) 
     return Py_BuildValue("d", res);
 }
 
+static PyObject *cuda_kmeans_iteration(PyObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *centers = NULL;
+    PyObject *points = NULL;
+    // partial aggregation
+    PyObject *results = NULL;
+    Py_buffer centers_view, points_view, results_view;
+    int k, dim, Dg, Db, Ns;
+
+    TYPE *dev_points = NULL, *dev_results = NULL;
+    printf("cuda_kmeans_iteration\n");
+
+    static char *kwlist[] = {"centers", "points", "results", "k", "dim", "Dg", "Db", "Ns", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OOO|iiiii", kwlist,
+                &centers, &points, &results, &k, &dim, &Dg, &Db, &Ns))
+        return NULL;
+
+    if(PyObject_GetBuffer(centers, &centers_view, 0) != 0)
+        return NULL;
+
+    if(PyObject_GetBuffer(points, &points_view, 0) != 0)
+        return NULL;
+
+    if(PyObject_GetBuffer(results, &results_view, 0) != 0)
+        return NULL;
+    //printf("%li\n", view.len);
+    //printf("%i, %i, %i\n", Dg, Db, Ns);
+    deviceMalloc((void**)&dev_points, points_view.len);
+    cudaMemcpyToDevice(dev_points, points_view.buf, points_view.len);
+
+    deviceMalloc((void**)&dev_results, results_view.len);
+    cudaMemcpyToDevice(dev_results, results_view.buf, results_view.len);
+
+    kmeans_iteration((TYPE*)centers_view.buf, dev_points, dev_results, 
+            points_view.len, points_view.itemsize, k, dim, Dg, Db, Ns);
+
+    cudaMemcpyToHost(results_view.buf, dev_results, results_view.len);
+
+    deviceFree(dev_results);
+    return Py_None;
+}
+
 static PyMethodDef CudaMethods[] = {
     {"test",  (PyCFunction)cuda_test, METH_O, "Execute a shell command."},
     {"aggregate",  (PyCFunction)cuda_aggregate, METH_VARARGS|METH_KEYWORDS, 
         "Perform aggregate on GPU."},
+    {"kmeans_iteration",  (PyCFunction)cuda_kmeans_iteration, METH_VARARGS|METH_KEYWORDS, 
+        "Perform kmeans on GPU."},
     {NULL, NULL, 0, NULL}
 };
 

@@ -16,7 +16,7 @@ bool cudaMemcpyToDevice(void *dst, void *src, long size) {
  * returns true on success
  */
 bool cudaMemcpyToHost(void *dst, void *src, long size) {
-    return cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice) == cudaSuccess;
+    return cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost) == cudaSuccess;
 }
 
 /*
@@ -27,32 +27,42 @@ bool deviceMalloc(void **dev_ptr, long size) {
     return cudaMalloc(dev_ptr, size) == cudaSuccess;
 }
 
+bool deviceFree(void *dev_ptr) {
+    return cudaFree(dev_ptr) == cudaSuccess;
+}
+
 /*static void launch_kernel(int Dg, int Db, int Ns, void (*kernel)()) {*/
     /*kernel<<<Dg, Db, Ns>>>();*/
 /*}*/
 
-static __global__ void kmeans_iteration_kernel(TYPE *centers, TYPE *points, 
-        long count, int dim, int k, TYPE *result) {
+static __global__ void kmeans_iteration_kernel(TYPE *centers, TYPE *points,
+        TYPE *results, long count, int dim, int k) {
     long index = threadIdx.x + blockIdx.x * blockDim.x;
 
     if (index < count) {
-
-        int cluster; 
+        int cluster = -1; 
         TYPE shortest = DBL_MAX;
         for (int i = 0; i < k; i++) {
             TYPE mag = 0;
 
             for (int d = 0; d < dim; d++) {
                 TYPE c = points[index * dim + d] - centers[i * dim + d];
-                mag = c * c;
+                mag += c * c;
             }
+            /*printf("mag %lf\n", mag);*/
 
-            if (mag < shortest)
+            if (mag < shortest) {
+                shortest = mag;
                 cluster = i;
+            }
         }
+        /*printf("kernel: point %lf\n", points[index]);*/
+        /*printf("kernel: cluster %i\n", cluster);*/
          
-        for (int d = 0; d < dim; d++)
-            atomicAdd(&result[cluster * dim + d], points[index * dim + d]);
+        for (int d = 0; d < dim; d++) {
+            atomicAdd(&results[cluster * dim + d], points[index * dim + d]);
+            /*printf("results: %lf\n", results[cluster *dim+d]);*/
+        }
     }
 }
 
@@ -70,20 +80,22 @@ static __global__ void aggregate_kernel(void *buf, long count, void *result) {
     }
 }
 
-/*void kmeans_iteration(void *centers, void *points, long size, long itemsize,*/
-        /*int k, int dim, int Dg, int Db, int Ns) {*/
-    /*void *device_centers = NULL;*/
-    /*void *device_points = NULL;*/
-    /*void *device_result = NULL;*/
+void kmeans_iteration(TYPE *centers, TYPE *dev_points, TYPE* dev_results, 
+        long size, long itemsize, int k, int dim, int Dg, int Db, int Ns) {
+    TYPE *dev_centers = NULL;
 
-    /*cudaMalloc(&device_result, itemsize * k * dim);*/
-    /*cudaMemcpy(device_result, &result, itemsize, cudaMemcpyHostToDevice);*/
+    cudaMalloc(&dev_centers, itemsize * k * dim);
+    cudaMemcpy(dev_centers, centers, itemsize * k * dim, cudaMemcpyHostToDevice);
 
-    /*cudaMalloc(&device_data, size);*/
-    /*cudaMemcpy(device_data, buf, size, cudaMemcpyHostToDevice);*/
+    /*printf("count: %i\n", size / itemsize/ dim);*/
+    /*for (int i = 0; i < 4; i++) */
+        /*printf("%lf\n", centers[i]);*/
 
-    /*kmeans_iteration_kernel<<<Dg, Db, Ns>>>();*/
-/*}*/
+    kmeans_iteration_kernel<<<Dg, Db, Ns>>>(dev_centers, dev_points,
+            dev_results, size / itemsize / dim, dim, k);
+
+    cudaFree(dev_centers);
+}
 
 TYPE aggregate(void *buf, long size, long itemsize, int Dg, int Db, int Ns) {
     printf("hello from cuda\n");

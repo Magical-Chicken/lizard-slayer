@@ -97,6 +97,17 @@ def main():
     res = cuda.aggregate(a, Dg=1, Db=32, Ns=0)
     print("res: ",  res)
     for i in a: print(i)
+    print("kmeans")
+
+    centers = array.array('d', [1,5])
+    points =  array.array('d', [1,2,3,6])
+    results = array.array('d', [0,0])
+    cuda.kmeans_iteration(centers, points, results, k=2, dim=1, 
+            Dg=1, Db=32, Ns=0)
+
+    print("partial aggregations:")
+    for i in results: print(i)
+    
     subcmd_handlers = {
         'client': run_client,
         'server': run_server,
