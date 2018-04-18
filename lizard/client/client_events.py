@@ -1,6 +1,7 @@
 import enum
 import os
 
+from lizard import LOG
 from lizard import client, events, user_prog
 
 
@@ -35,6 +36,7 @@ def handle_event_register_prog(event):
     # set up program build dir and compile it
     with client.client_access() as c:
         c.user_programs[checksum] = program
+    LOG.info('Registered program: %s', program)
     return {}
 
 

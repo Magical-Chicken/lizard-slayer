@@ -4,7 +4,6 @@ import json
 from lizard.client import APP
 from lizard.client import client_events
 from lizard import client, events
-from lizard import LOG
 
 API_MIME_TYPE = 'application/json'
 
@@ -88,11 +87,8 @@ def program_item(prog_hash):
         with client.client_access() as c:
             prog = c.user_programs.get(prog_hash)
         return respond_json(prog.properties) if prog else respond_error(404)
-    elif request.method == 'DELETE':
-        with client.client_access() as c:
-            res = c.user_programs.pop(prog_hash, None)
-            LOG.info('Deleted user program: %s', res)
-        return Response("ok") if res is not None else respond_error(404)
+    else:
+        raise NotImplementedError
 
 
 @APP.route('/events/<event_id>', methods=['GET'])
