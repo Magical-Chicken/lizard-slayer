@@ -100,6 +100,38 @@ def client_item(client_id):
         return Response("ok") if res is not None else respond_error(404)
 
 
+@APP.route('/programs', methods=['GET', 'POST'])
+def programs():
+    """
+    GET,POST /programs: register or list programs
+    :returns: flask response
+    """
+    if request.method == 'POST':
+        event_data = request.get_json()
+        if not all(n in event_data for n in ('name', 'code', 'checksum')):
+            return respond_error(400)
+        return respond_create_event('register_prog', event_data)
+    else:
+        with server.state_access() as s:
+            prog_hashes = list(s.registered_progs.keys())
+        return respond_json({'programs': prog_hashes})
+
+
+@APP.route('/programs/<prog_hash>', methods=['GET', 'DELETE'])
+def program_item(prog_hash):
+    """
+    GET,DELETE /programs/<prog_hash>: query programs
+    :prog_hash: program checksum/identifier
+    :returns: flask response
+    """
+    if request.method == 'GET':
+        with server.state_access() as s:
+            prog = s.registered_programs.get(prog_hash)
+        return respond_json(prog.properties) if prog else respond_error(404)
+    else:
+        raise NotImplementedError
+
+
 @APP.route('/events/<event_id>', methods=['GET'])
 def event_item(event_id):
     """
