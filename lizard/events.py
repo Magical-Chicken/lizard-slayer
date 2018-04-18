@@ -17,17 +17,19 @@ class BaseEvent(object):
     event_map_lock = None
     event_handler_map = None
 
-    def __init__(self, event_type, data):
+    def __init__(self, event_type, data, register_event=True):
         """
         Init for Event
         :event_type: event type
         :data: event data
+        :register_event: if true add event to event result map
         """
         self.event_type = event_type
         self.event_id = util.hex_uuid()
         self.status = EventStatus.PENDING
         self.result = None
         self.data = data
+        self._register_event()
 
     def handle(self):
         """
@@ -81,7 +83,7 @@ class BaseEvent(object):
 
     def __str__(self):
         """str repr for event"""
-        return "Event: '{}' Data: {}".format(self.event_type, self.data)
+        return "EventType: '{}' ID: {}".format(self.event_type, self.event_id)
 
 
 def get_event_type_by_name(event_type_name, event_type_class):
