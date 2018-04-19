@@ -35,18 +35,18 @@ bool deviceFree(void *dev_ptr) {
     /*kernel<<<Dg, Db, Ns>>>();*/
 /*}*/
 
-static __global__ void kmeans_iteration_kernel(TYPE *centers, TYPE *points,
-        TYPE *results, long count, int dim, int k) {
+static __global__ void kmeans_iteration_kernel(double *centers, double *points,
+        double *partial_results, int *count_results, long count, int dim, int k) {
     long index = threadIdx.x + blockIdx.x * blockDim.x;
 
     if (index < count) {
         int cluster = -1; 
-        TYPE shortest = DBL_MAX;
+        double shortest = DBL_MAX;
         for (int i = 0; i < k; i++) {
             TYPE mag = 0;
 
             for (int d = 0; d < dim; d++) {
-                TYPE c = points[index * dim + d] - centers[i * dim + d];
+                double c = points[index * dim + d] - centers[i * dim + d];
                 mag += c * c;
             }
             /*printf("mag %lf\n", mag);*/
@@ -60,7 +60,8 @@ static __global__ void kmeans_iteration_kernel(TYPE *centers, TYPE *points,
         /*printf("kernel: cluster %i\n", cluster);*/
          
         for (int d = 0; d < dim; d++) {
-            atomicAdd(&results[cluster * dim + d], points[index * dim + d]);
+            atomicAdd(&partial_results[cluster * dim + d], points[index * dim + d]);
+            atomicAdd(&count_results[cluster], 1);
             /*printf("results: %lf\n", results[cluster *dim+d]);*/
         }
     }
@@ -80,9 +81,9 @@ static __global__ void aggregate_kernel(void *buf, long count, void *result) {
     }
 }
 
-void kmeans_iteration(TYPE *centers, TYPE *dev_points, TYPE* dev_results, 
-        long size, long itemsize, int k, int dim, int Dg, int Db, int Ns) {
-    TYPE *dev_centers = NULL;
+void kmeans_iteration(double *centers, double *dev_points, double *dev_partial_results, 
+        int *dev_count_results, long size, long itemsize, int k, int dim, int Dg, int Db, int Ns) {
+    double *dev_centers = NULL;
 
     cudaMalloc(&dev_centers, itemsize * k * dim);
     cudaMemcpy(dev_centers, centers, itemsize * k * dim, cudaMemcpyHostToDevice);
@@ -92,7 +93,7 @@ void kmeans_iteration(TYPE *centers, TYPE *dev_points, TYPE* dev_results,
         /*printf("%lf\n", centers[i]);*/
 
     kmeans_iteration_kernel<<<Dg, Db, Ns>>>(dev_centers, dev_points,
-            dev_results, size / itemsize / dim, dim, k);
+            dev_partial_results, dev_count_results, size / itemsize / dim, dim, k);
 
     cudaFree(dev_centers);
 }

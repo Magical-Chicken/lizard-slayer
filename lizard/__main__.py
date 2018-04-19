@@ -101,12 +101,23 @@ def main():
 
     centers = array.array('d', [1,5])
     points =  array.array('d', [1,2,3,6])
-    results = array.array('d', [0,0])
-    cuda.kmeans_iteration(centers, points, results, k=2, dim=1, 
-            Dg=1, Db=32, Ns=0)
+    partial_results = array.array('d', [0,0])
+    count_results = array.array('i', [0,0])
+
+    cuda.kmeans_iteration(centers, points, partial_results, count_results, 
+            k=2, dim=1, Dg=1, Db=32, Ns=0)
 
     print("partial aggregations:")
-    for i in results: print(i)
+    for i in partial_results: print(i)
+    print(len(partial_results))
+
+    for i in range(0,2):
+        for d in range(0, 1):
+            if (count_results[i] == 0): print(i) # FIXME assign random points
+            else:
+                partial_results[i * 1 + d] = partial_results[i * 1 + d] / count_results[i]
+    print("after division result:")
+    for i in partial_results: print(i)
     
     subcmd_handlers = {
         'client': run_client,
