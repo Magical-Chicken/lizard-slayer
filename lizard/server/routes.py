@@ -142,3 +142,24 @@ def event_item(event_id):
     with server.SERVER_EVENT_MAP_LOCK:
         event = server.SERVER_EVENT_MAP.get(event_id)
     return respond_json(event.properties) if event else respond_error(404)
+
+
+@APP.route('/remote_event/<client_id>', methods=['POST'])
+def remote_event(client_id):
+    """
+    POST: /remote_event/<client_id>: register remote event
+    :client_id: event to register
+    :returns: flask response
+    """
+    raise NotImplementedError
+
+
+@APP.route('/remote_event/<client_id>/<event_id>', methods=['PUT'])
+def remote_event_item(client_id, event_id):
+    """
+    PUT: /remote_event/<client_id>/<event_id>: update remote event
+    :client_id: client id of remote event origin
+    :event_id: event state to update
+    :returns: flask response
+    """
+    raise NotImplementedError
