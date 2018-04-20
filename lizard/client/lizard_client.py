@@ -54,6 +54,22 @@ class LizardClient(object):
             self.server_url, endpoint, method='POST', data=data,
             expect_json=expect_json)
 
+    def put(self, endpoint, data, expect_json=True, add_uuid=True):
+        """
+        make a PUT request to the server, auto add client uuid to data
+        :endpoint: server api endpoint
+        :data: data to post as json, must be dict
+        :expect_json: if true, decode response as json
+        :add_uuid: if true add uuid to params
+        :returns: result data
+        :raises: OSError: if bad response code
+        """
+        if add_uuid:
+            data['client_uuid'] = self.uuid
+        return util.make_api_req(
+            self.server_url, endpoint, method='PUT', data=data,
+            expect_json=expect_json)
+
     def register(self, client_port):
         """
         register client with server

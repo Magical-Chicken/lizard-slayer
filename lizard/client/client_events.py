@@ -50,3 +50,39 @@ class ClientEvent(events.BaseEvent):
     event_map = client.CLIENT_EVENT_MAP
     event_map_lock = client.CLIENT_EVENT_MAP_LOCK
     event_handler_map = CLIENT_EVENT_HANDLER_MAP
+
+    def __init__(
+            self, event_type, data, register_event=True,
+            send_remote_event=False):
+        """
+        Init for Event
+        :event_type: event type
+        :data: event data
+        :register_event: if true add event to event result map
+        :send_remote_event: if true send event status to server
+        """
+        self.send_remote_event = send_remote_event
+        super().__init__(event_type, data, register_event=register_event)
+
+    def handle(self):
+        """
+        Handle event using handler defined in event handler map and set result
+        """
+        super().handle()
+        if self.send_remote_event:
+            self._put_remove_event()
+
+    def _register_event(self):
+        """
+        Register event in event map
+        :result: result data
+        """
+        super()._register_event()
+        if self.send_remote_event:
+            self._put_remove_event()
+
+    def _put_remove_event(self):
+        """PUT event status in server remote event map"""
+        with client.client_access() as c:
+            endpoint = os.path.join('/remote_event', c.uuid, self.event_id)
+            c.put(endpoint, self.properties, expect_json=False, add_uuid=False)
