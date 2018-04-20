@@ -144,20 +144,6 @@ def event_item(event_id):
     return respond_json(event.properties) if event else respond_error(404)
 
 
-@APP.route('/remote_event/<client_id>', methods=['POST'])
-def remote_event_post(client_id):
-    """
-    POST: /remote_event/<client_id>: register remote event
-    :client_id: event to register
-    :returns: flask response
-    """
-    event_props = request.get_json()
-    event_id = event_props['event_id']
-    with remote_event.remote_event_access() as r:
-        r.register_event(client_id, event_id, event_props)
-    return "ok"
-
-
 @APP.route('/remote_event/<client_id>/<event_id>', methods=['PUT'])
 def remote_event_item(client_id, event_id):
     """
@@ -168,5 +154,5 @@ def remote_event_item(client_id, event_id):
     """
     event_props = request.get_json()
     with remote_event.remote_event_access() as r:
-        r.update_event(client_id, event_id, event_props)
+        r.store_event(client_id, event_id, event_props)
     return "ok"

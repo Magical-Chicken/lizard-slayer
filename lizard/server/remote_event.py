@@ -37,21 +37,9 @@ class RemoteEvents(object):
             raise ValueError("Client already exists")
         self._remote_event_map[client_id] = {}
 
-    def register_event(self, client_id, event_id, event_props):
+    def store_event(self, client_id, event_id, event_props):
         """
-        Register a new event
-        :client_id: client uuid
-        :event_id: event uuid
-        :event_props: event properties
-        :raises: ValueError: if client does not exist
-        """
-        if client_id not in self._remote_event_map:
-            raise ValueError("Client does not exist")
-        self._remote_event_map[client_id][event_id] = event_props
-
-    def update_event(self, client_id, event_id, event_props):
-        """
-        Update an event to a completed state
+        Update or register an event
         :client_id: client uuid
         :event_id: event uuid
         :event_props: new event properties
@@ -59,6 +47,4 @@ class RemoteEvents(object):
         """
         if client_id not in self._remote_event_map:
             raise ValueError("Client does not exist")
-        if event_id not in self._remote_event_map[client_id]:
-            raise ValueError("Event does not exist")
         self._remote_event_map[client_id][event_id] = event_props
