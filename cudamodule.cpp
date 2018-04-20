@@ -3,6 +3,8 @@
 #include "cuda.h"
 
 extern "C" {
+
+#define DEVICE_MEMORY "device_memory"
     
 static PyObject *cuda_test(PyObject *self, PyObject *arg) {
     printf("hello world!\n");
@@ -19,6 +21,36 @@ static PyObject *cuda_test(PyObject *self, PyObject *arg) {
 
     PyBuffer_Release(&view);
     printf("result: %lf\n",res);
+    return Py_None;
+}
+
+static PyObject *cuda_pin_gpu_memory(PyObject *self, PyObject *data) {
+    Py_buffer view;
+    void *pinned_mem;
+
+    if(PyObject_GetBuffer(data, &view, 0) != 0)
+        return NULL;
+
+    // FIXME ERROR CHECK
+    deviceMalloc(&pinned_mem, view.len);
+    cudaMemcpyToDevice(pinned_mem, view.buf, view.len);
+    // FIXME destructor for capsule should not be needed
+    return PyCapsule_New(pinned_mem, DEVICE_MEMORY, NULL);
+}
+
+static PyObject *cuda_unpin_gpu_memory(PyObject *self, PyObject *capsule) {
+    void *pinned_mem;
+
+    if (!PyCapsule_CheckExact(capsule)) {
+        PyErr_SetString(PyExc_TypeError, "must be a python capsule");
+        return NULL;
+    }
+
+    if ((pinned_mem = PyCapsule_GetPointer(capsule, DEVICE_MEMORY)) == NULL) {
+        return NULL;
+    }
+    
+    deviceFree(pinned_mem);
     return Py_None;
 }
 
@@ -146,6 +178,10 @@ static PyMethodDef CudaMethods[] = {
         "Perform aggregate on GPU."},
     {"kmeans_iteration",  (PyCFunction)cuda_kmeans_iteration, METH_VARARGS|METH_KEYWORDS, 
         "Perform kmeans on GPU."},
+    {"pin_gpu_memory",  (PyCFunction)cuda_pin_gpu_memory, METH_O, 
+        "Pin memory in gpu."},
+    {"unpin_gpu_memory",  (PyCFunction)cuda_unpin_gpu_memory, METH_O, 
+        "Unpin memory in gpu."},
     {NULL, NULL, 0, NULL}
 };
 
