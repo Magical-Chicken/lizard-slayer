@@ -8,7 +8,7 @@ import queue
 from lizard import LOG
 from lizard import cli, client, cluster, hardware_discovery, server, util
 from lizard.client import client_worker
-from lizard.server import server_worker, server_util
+from lizard.server import remote_event, server_worker, server_util
 
 
 def run_client(args, tmpdir):
@@ -54,6 +54,8 @@ def run_server(args, tmpdir):
     """
     # create server state
     server.create_state(args, tmpdir)
+    # init remote event system
+    remote_event.create_remote_events()
     # start api server
     call = functools.partial(
         server.APP.run, debug=False, host=args.host, port=args.port)
