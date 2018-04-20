@@ -20,6 +20,16 @@ class ClientState(object):
         self.uuid = client_uuid
         self.url = url
 
+    def _register_event_callback(self, api_res, callback_func):
+        """
+        register a remote event callback function from an api result
+        :api_res: result of respond_create_event() api route on client
+        :callback_func: callback function
+        """
+        event_id = api_res['event_id']
+        with remote_event.remote_events_access() as r:
+            r.register_callback_func(self.uuid, event_id, callback_func)
+
     def get(self, endpoint, params=None, expect_json=True):
         """
         make a GET request to this client
