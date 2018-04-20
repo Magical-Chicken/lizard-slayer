@@ -31,10 +31,6 @@ bool deviceFree(void *dev_ptr) {
     return cudaFree(dev_ptr) == cudaSuccess;
 }
 
-/*static void launch_kernel(int Dg, int Db, int Ns, void (*kernel)()) {*/
-    /*kernel<<<Dg, Db, Ns>>>();*/
-/*}*/
-
 static __global__ void kmeans_iteration_kernel(double *centers, double *points,
         double *partial_results, int *count_results, long count, int dim, int k) {
     long index = threadIdx.x + blockIdx.x * blockDim.x;
