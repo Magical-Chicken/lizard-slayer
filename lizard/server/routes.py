@@ -2,7 +2,7 @@ from flask import Response, request
 import json
 
 from lizard.server import APP
-from lizard.server import server_events
+from lizard.server import remote_event, server_events
 from lizard import server, events
 from lizard import LOG
 
@@ -145,13 +145,17 @@ def event_item(event_id):
 
 
 @APP.route('/remote_event/<client_id>', methods=['POST'])
-def remote_event(client_id):
+def remote_event_post(client_id):
     """
     POST: /remote_event/<client_id>: register remote event
     :client_id: event to register
     :returns: flask response
     """
-    raise NotImplementedError
+    event_props = request.get_json()
+    event_id = event_props['event_id']
+    with remote_event.remote_event_access() as r:
+        r.register_event(client_id, event_id, event_props)
+    return "ok"
 
 
 @APP.route('/remote_event/<client_id>/<event_id>', methods=['PUT'])
@@ -162,4 +166,7 @@ def remote_event_item(client_id, event_id):
     :event_id: event state to update
     :returns: flask response
     """
-    raise NotImplementedError
+    event_props = request.get_json()
+    with remote_event.remote_event_access() as r:
+        r.update_event(client_id, event_id, event_props)
+    return "ok"

@@ -51,7 +51,7 @@ class RemoteEvents(object):
 
     def update_event(self, client_id, event_id, event_props):
         """
-        Update an event
+        Update an event to a completed state
         :client_id: client uuid
         :event_id: event uuid
         :event_props: new event properties
