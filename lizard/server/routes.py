@@ -153,6 +153,6 @@ def remote_event_item(client_id, event_id):
     :returns: flask response
     """
     event_props = request.get_json()
-    with remote_event.remote_event_access() as r:
+    with remote_event.remote_events_access() as r:
         r.store_event(client_id, event_id, event_props)
     return "ok"

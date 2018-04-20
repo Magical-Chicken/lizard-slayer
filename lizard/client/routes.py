@@ -27,16 +27,18 @@ def respond_json(data, status=200):
     return Response(json.dumps(data), status, mimetype=API_MIME_TYPE)
 
 
-def respond_create_event(event_type_name, data):
+def respond_create_event(event_type_name, data, send_remote_event=False):
     """
     create event and add to queue
     :event_type: even ttype name
     :data: event details
+    :send_remote_event: if true send event status to server
     :returns: flask response
     """
     e_type = events.get_event_type_by_name(
         event_type_name, client_events.ClientEventType)
-    event = client_events.ClientEvent(e_type, data)
+    event = client_events.ClientEvent(
+        e_type, data, send_remote_event=send_remote_event)
     client.CLIENT_QUEUE.put_nowait(event)
     return respond_json({'event_id': event.event_id})
 
@@ -69,7 +71,9 @@ def programs():
         event_data = request.get_json()
         if not all(n in event_data for n in ('name', 'code', 'checksum')):
             return respond_error(400)
-        return respond_create_event('register_prog', event_data)
+        return respond_create_event(
+            'register_prog', event_data,
+            send_remote_event=event_data.get('send_remote_event'))
     else:
         with client.client_access() as c:
             prog_hashes = list(c.user_programs.keys())

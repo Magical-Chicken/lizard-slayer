@@ -65,7 +65,7 @@ def make_api_req(
     make an api request
     :server_url: base url for api server
     :endpoint: api endpoint
-    :method: http method to use, one of GET, POST, DELETE
+    :method: http method to use, one of GET, POST, PUT, DELETE
     :data: post data dict
     :params: get parameters
     :raise_for_status: if true, raise error if status not 200
@@ -78,6 +78,8 @@ def make_api_req(
         res = requests.get(url, params=params)
     elif method == 'POST':
         res = requests.post(url, json=data)
+    elif method == 'PUT':
+        res = requests.put(url, json=data)
     elif method == 'DELETE':
         res = requests.delete(url)
     else:

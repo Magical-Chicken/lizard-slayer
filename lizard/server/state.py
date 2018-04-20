@@ -2,6 +2,7 @@ import os
 
 from lizard import LOG
 from lizard import util
+from lizard.server import remote_event
 
 
 class ClientState(object):
@@ -95,6 +96,8 @@ class ServerState(object):
         client_uuid = util.hex_uuid()
         url = 'http://{}:{}'.format(client_ip, client_port)
         self.clients[client_uuid] = ClientState(client_uuid, hardware, url)
+        with remote_event.remote_events_access() as r:
+            r.register_client(client_uuid)
         LOG.info('Registered client: %s', self.clients[client_uuid])
         return client_uuid
 

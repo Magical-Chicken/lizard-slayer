@@ -28,8 +28,10 @@ def handle_event_register_prog(event):
     with open(code_file, 'w') as fp:
         fp.write(code)
     program = user_prog.UserProg(name, checksum, code_file)
+    post_data = event.data.copy()
+    post_data['send_remote_event'] = True
     with server.state_access() as s:
-        s.post_all('/programs', event.data)
+        s.post_all('/programs', post_data)
         s.registered_progs[checksum] = program
     LOG.info('Registered user program: %s', program)
     # FIXME FIXME FIXME
