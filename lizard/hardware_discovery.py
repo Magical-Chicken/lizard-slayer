@@ -1,3 +1,4 @@
+from lizard import LOG
 from lizard import util
 
 
@@ -19,8 +20,12 @@ def check_gpus(args):
     :args: parsed cmdline args
     :returns: dict with GPU info
     """
+    empty_result = {'gpus_present': 0}
+    if args.no_gpu:
+        LOG.warning("Not scanning available gpus, running programs will fail")
+        return empty_result
     # FIXME FIXME FIXME
-    return {'gpu_present': False}
+    return empty_result
 
 
 def scan_hardware(args):

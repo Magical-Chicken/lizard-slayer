@@ -25,7 +25,10 @@ ARG_SETS = {
           'metavar': 'PATH', 'action': 'store', 'default': None}),
         (('-i', '--include'),
          {'help': 'path to CUDA include dir', 'required': False,
-          'metavar': 'PATH', 'action': 'store', 'default': None}),),
+          'metavar': 'PATH', 'action': 'store', 'default': None}),
+        (('-n', '--no-gpu'),
+         {'help': 'don\'t check available CUDA gpus',
+          'action': 'store_true', 'default': False}),),
     'LOG': (
         (('-v', '--verbose'),
          {'help': 'enable debug messages', 'action': 'store_true',
