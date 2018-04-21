@@ -15,21 +15,15 @@ import sys
 import yaml
 
 CONFIG_FILENAME = 'config.yaml'
-EXPECTED_SOURCE_FILES_MAP = {
-    'python_source': 'python_code',
-    'cpp_source': 'cpp_code',
-    'cuda_source': 'cuda_code',
-}
 
 
 def load_program(program_directory, config_file):
     with open(config_file, 'r') as fp:
         config_data = yaml.load(fp)
-    for source, config_key_name in EXPECTED_SOURCE_FILES_MAP.items():
-        source_name = config_data['sources'][source]
+    for key, source_name in config_data['sources'].items():
         source_path = os.path.join(program_directory, source_name)
         with open(source_path, 'r') as fp:
-            config_data['code'][config_key_name] = fp.read()
+            config_data['code'][key] = fp.read()
     return config_data
 
 

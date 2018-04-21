@@ -6,9 +6,10 @@ from lizard import PROGRAM_DATA_DIRNAME
 from lizard import util
 
 PROGRAM_SOURCE_FILE_NAMES = {
-    'cuda_code': 'kernel.cu',
-    'cpp_code': 'wrapper.cpp',
-    'python_code': 'python_funcs.py',
+    'cuda': 'kernel.cu',
+    'cpp': 'wrapper.cpp',
+    'python': 'python_funcs.py',
+    'header': 'program.h',
 }
 
 ADDITIONAL_BUILD_FILES = ('Makefile', 'setup.py')
