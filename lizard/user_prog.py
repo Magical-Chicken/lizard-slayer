@@ -37,6 +37,7 @@ class UserProg(object):
         return {
             'name': self.name,
             'checksum': self.checksum,
+            'ready': self.ready,
         }
 
     def verify_checksum(self):
