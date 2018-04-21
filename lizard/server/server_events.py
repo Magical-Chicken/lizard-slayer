@@ -15,13 +15,13 @@ class ServerEventType(enum.Enum):
 def handle_event_register_prog(event):
     """
     handle 'register_prog' event
-    data must include 'name', 'checksum' and 'code'
+    data must include 'name', 'checksum' and 'data'
     :event: event to handle
     :returns: event result data if event sucessfully handled
     :raises: Exception: if error occurs handling event
     """
 
-    code = event.data['code']
+    data = event.data['data']
     name = event.data['name']
     checksum = event.data['checksum']
     wakeup_ev = threading.Event()
@@ -36,10 +36,10 @@ def handle_event_register_prog(event):
 
     with server.state_access() as s:
         user_progs_dir = s.user_progs_dir
-    code_file = os.path.join(user_progs_dir, checksum)
-    with open(code_file, 'w') as fp:
-        fp.write(code)
-    program = user_prog.UserProg(name, checksum, code_file)
+    data_file = os.path.join(user_progs_dir, checksum)
+    with open(data_file, 'w') as fp:
+        fp.write(data)
+    program = user_prog.UserProg(name, checksum, data_file)
     post_data = event.data.copy()
     post_data['send_remote_event'] = True
     with server.state_access() as s:

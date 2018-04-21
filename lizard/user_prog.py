@@ -1,36 +1,52 @@
+import json
 import os
 
 from lizard import util
 
-KERNEL_FILENAME = 'kernel.cu'
+PROGRAM_SOURCE_FILE_NAMES = {
+    'cuda_code': 'kernel.cu',
+    'cpp_code': 'wrapper.cpp',
+    'python_code': 'python_funcs.py',
+}
 
 
 class UserProg(object):
     """A user program"""
 
-    def __init__(self, name, checksum, code_file, build_dir=None):
+    def __init__(self, name, checksum, data_file, build_dir=None):
         """
         UserProg init
         :name: human readable program name
-        :checksum: checksum of code file, and id key
-        :code_file: path to code file
+        :checksum: checksum of data file, and id key
+        :data_file: path to json program definition blob
         :build_dir: if provided, directory to build code in
         """
         self.ready = False
         self.name = name
         self.checksum = checksum
-        self.code_file = code_file
         self.build_dir = build_dir
+        self.data_file = data_file
+        with open(self.data_file, 'r') as fp:
+            self.data = json.load(fp)
+
+    def _unpack(self):
+        """unpack program files and set up build dir structure"""
+        for code_key, filename in PROGRAM_SOURCE_FILE_NAMES.items():
+            code = self.data['code'][code_key]
+            path = os.path.join(self.build_dir, filename)
+            with open(path, 'w') as fp:
+                fp.write(code)
 
     def build(self):
         """
         build the shared object and python wrapper module
         note that the build dir must exist and have user prog kernel in it
         """
-        kernel_file = os.path.join(self.build_dir, KERNEL_FILENAME)
-        if not self.build_dir or not os.path.exists(kernel_file):
-            raise ValueError("Build dir is not set up")
-        raise NotImplementedError
+        if not self.build_dir or not os.path.isdir(self.build_dir):
+            raise ValueError("Build dir not set up")
+        self._unpack()
+        # FIXME FIXME FIXME
+        # finsih build process
 
     @property
     def properties(self):
@@ -42,13 +58,13 @@ class UserProg(object):
 
     def verify_checksum(self):
         """
-        ensure that program was code file matches checksum
+        ensure that the data file matches the program checksum
         :raises: ValueError: if program data does not match checksum
         """
-        with open(self.code_file, 'rb') as fp:
+        with open(self.data_file, 'rb') as fp:
             res = util.checksum(fp.read())
         if res != self.checksum:
-            raise ValueError("Code file checksum does not match")
+            raise ValueError("Checksum does not match")
 
     def __str__(self):
         """String representation for UserProg"""

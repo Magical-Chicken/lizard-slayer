@@ -69,7 +69,7 @@ def programs():
     """
     if request.method == 'POST':
         event_data = request.get_json()
-        if not all(n in event_data for n in ('name', 'code', 'checksum')):
+        if not all(n in event_data for n in ('name', 'data', 'checksum')):
             return respond_error(400)
         return respond_create_event(
             'register_prog', event_data,

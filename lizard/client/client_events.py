@@ -15,25 +15,24 @@ class ClientEventType(enum.Enum):
 def handle_event_register_prog(event):
     """
     handle 'register_prog' event
-    data must include 'name', 'checksum' and 'code'
+    data must include 'name', 'checksum' and 'data'
     :event: event to handle
     :returns: event result data if event sucessfully handled
     :raises: ValueError: if program data does not match checksum
     """
-    code = event.data['code']
+    data = event.data['data']
     name = event.data['name']
     checksum = event.data['checksum']
     with client.client_access() as c:
         user_progs_dir = c.user_progs_dir
     prog_dir = os.path.join(user_progs_dir, checksum)
-    code_file = os.path.join(prog_dir, user_prog.KERNEL_FILENAME)
+    data_file = os.path.join(prog_dir, 'data.json')
     os.mkdir(prog_dir)
-    with open(code_file, 'w') as fp:
-        fp.write(code)
-    program = user_prog.UserProg(name, checksum, code_file)
+    with open(data_file, 'w') as fp:
+        fp.write(data)
+    program = user_prog.UserProg(name, checksum, data_file, build_dir=prog_dir)
     program.verify_checksum()
-    # FIXME FIXME FIXME
-    # set up program build dir and compile it
+    program.build()
     with client.client_access() as c:
         c.user_programs[checksum] = program
     LOG.info('Registered program: %s', program)
