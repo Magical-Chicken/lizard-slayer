@@ -29,6 +29,7 @@ class RemoteEvents(object):
         """RemoteEvents init"""
         self._remote_event_map = {}
         self._callback_map = {}
+        self._multi_callback_list = []
         self._callback_queue = queue.Queue()
         self.start_callback_worker()
 
@@ -54,6 +55,18 @@ class RemoteEvents(object):
             self._callback_map[client_id][event_id] = []
         self._callback_map[client_id][event_id].append(func)
 
+    def register_multi_callback(self, event_ids, callback_func):
+        """
+        Register a callback to run after a group of event_ids complete
+        :event_ids: group of event ids to wait for
+        :callback_func: callback function to run
+        """
+        # NOTE: this assumes client generated uuids are globally unique
+        self._multi_callback_list.append({
+            'funcall': callback_func,
+            'event_ids': event_ids
+        })
+
     def store_event(self, client_id, event_id, event_props):
         """
         Update or register an event
@@ -70,6 +83,15 @@ class RemoteEvents(object):
             for func in self._callback_map[client_id].get(event_id, []):
                 callback_data = {'funcall': func, 'event_data': event_props}
                 self._callback_queue.put_nowait(callback_data)
+            for multi_info in self._multi_callback_list:
+                if event_id in multi_info['event_ids']:
+                    multi_info['event_ids'].remove(event_id)
+                if len(multi_info['event_ids']) == 0:
+                    callback_data = {
+                        'funcall': multi_info['funcall'],
+                        'event_data': {}
+                    }
+                    self._callback_queue.put_nowait(multi_info, callback_data)
 
     def start_callback_worker(self):
         """Worker for handling remote event triggered callbacks"""

@@ -19,9 +19,16 @@ def handle_event_register_prog(event):
     :returns: event result data if event sucessfully handled
     :raises: Exception: if error occurs handling event
     """
+
     code = event.data['code']
     name = event.data['name']
     checksum = event.data['checksum']
+
+    def callback_func(client, event_props):
+        if event_props['status'] != events.EventStatus.SUCCESS.value:
+            raise ValueError('{}: failed to register program'.format(client))
+        client.registered_progs.append(checksum)
+
     with server.state_access() as s:
         user_progs_dir = s.user_progs_dir
     code_file = os.path.join(user_progs_dir, checksum)
@@ -31,7 +38,7 @@ def handle_event_register_prog(event):
     post_data = event.data.copy()
     post_data['send_remote_event'] = True
     with server.state_access() as s:
-        s.post_all('/programs', post_data)
+        s.post_all('/programs', post_data, callback_func=callback_func)
         s.registered_progs[checksum] = program
     LOG.info('Registered user program: %s', program)
     # FIXME FIXME FIXME
