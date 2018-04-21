@@ -1,0 +1,11 @@
+info:
+    name: Empty User Program Demo
+    version: 0.1
+    data_flow_model: groupby_aggergate
+    iterative: true
+    kernel_type: cuda
+sources:
+    python_source: empty.py
+    cpp_source: empty_cmodule.cpp
+    cuda_source: kernel.cu
+code: {}
