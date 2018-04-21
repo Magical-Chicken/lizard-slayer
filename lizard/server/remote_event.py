@@ -91,7 +91,7 @@ class RemoteEvents(object):
                         'funcall': multi_info['funcall'],
                         'event_data': {}
                     }
-                    self._callback_queue.put_nowait(multi_info, callback_data)
+                    self._callback_queue.put_nowait(callback_data)
 
     def start_callback_worker(self):
         """Worker for handling remote event triggered callbacks"""

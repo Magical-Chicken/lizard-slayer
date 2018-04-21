@@ -1,5 +1,6 @@
 import enum
 import os
+import threading
 
 from lizard import LOG
 from lizard import events, server, user_prog
@@ -23,6 +24,10 @@ def handle_event_register_prog(event):
     code = event.data['code']
     name = event.data['name']
     checksum = event.data['checksum']
+    wakeup_ev = threading.Event()
+
+    def multi_callback_func(event_props):
+        wakeup_ev.set()
 
     def callback_func(client, event_props):
         if event_props['status'] != events.EventStatus.SUCCESS.value:
@@ -38,12 +43,16 @@ def handle_event_register_prog(event):
     post_data = event.data.copy()
     post_data['send_remote_event'] = True
     with server.state_access() as s:
-        s.post_all('/programs', post_data, callback_func=callback_func)
-        s.registered_progs[checksum] = program
+        s.post_all(
+            '/programs', post_data, callback_func=callback_func,
+            multi_callback_func=multi_callback_func)
+    # NOTE: timeout for registering program on all nodes set to 10 min
+    wakeup_ev.wait(timeout=600)
     LOG.info('Registered user program: %s', program)
-    # FIXME FIXME FIXME
-    # should use event wait system to mark prog ready once all clients ready
-    return {}
+    with server.state_access() as s:
+        program.ready = True
+        s.registered_progs[checksum] = program
+    return program.properties
 
 
 SERVER_EVENT_HANDLER_MAP = {

@@ -128,18 +128,20 @@ class ServerState(object):
         :results: all client create event results
         :callback_func: callback function to run
         """
-        event_ids = [r['event_id'] for r in results]
+        event_ids = [r['event_id'] for r in results.values()]
         with remote_event.remote_events_access() as r:
             r.register_multi_callback(event_ids, callback_func)
 
     def get_all(
-            self, endpoint, params=None, expect_json=True, callback_func=None):
+            self, endpoint, params=None, expect_json=True, callback_func=None,
+            multi_callback_func=None):
         """
         make a GET request to all clients, does not raise for bad status code
         :endpoint: client api endpoint
         :params: GET parameters
         :expect_json: if true, decode client responses as json
         :callback_func: if set, expect event creation and register callback
+        :multi_callback_func: same as callback but after all clients return
         :returns: tuple of successful results dict, failed client uuids
         """
         res_success = {}
@@ -151,16 +153,22 @@ class ServerState(object):
                     callback_func=callback_func)
                 res_success[client_uuid] = res
             except OSError:
+                LOG.warning("Client failed event")
                 failed_clients.append(client_uuid)
+        self._register_multi_callback_from_remote(
+            res_success, multi_callback_func)
         return res_success, failed_clients
 
-    def post_all(self, endpoint, data, expect_json=True, callback_func=None):
+    def post_all(
+            self, endpoint, data, expect_json=True, callback_func=None,
+            multi_callback_func=None):
         """
         make a POST request to all clients, does not raise for bad status code
         :endpoint: client api endpoint
         :data: data to post as json, must be dict
         :expect_json: if true, decode client responses as json
         :callback_func: if set, expect event creation and register callback
+        :multi_callback_func: same as callback but after all clients return
         :returns: tuple of successful results dict, failed client uuids
         """
         res_success = {}
@@ -172,7 +180,10 @@ class ServerState(object):
                     callback_func=callback_func)
                 res_success[client_uuid] = res
             except OSError:
+                LOG.warning("Client failed event")
                 failed_clients.append(client_uuid)
+        self._register_multi_callback_from_remote(
+            res_success, multi_callback_func)
         return res_success, failed_clients
 
     def delete_all(self, endpoint):
