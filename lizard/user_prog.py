@@ -54,6 +54,7 @@ class UserProg(object):
             'name': self.name,
             'checksum': self.checksum,
             'ready': self.ready,
+            'info': self.data['info'],
         }
 
     def verify_checksum(self):
