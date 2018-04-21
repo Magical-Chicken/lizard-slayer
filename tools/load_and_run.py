@@ -35,7 +35,7 @@ def load_program(program_directory, config_file):
 
 def register_program(server_address, config_data):
     config_json = json.dumps(config_data)
-    checksum = hashlib.sha1(config_json).hexdigest()
+    checksum = hashlib.sha1(config_json.encode()).hexdigest()
     post_data = {
         'name': config_data['info']['name'],
         'data': config_json,
@@ -48,11 +48,11 @@ def register_program(server_address, config_data):
 
 
 def main():
-    program_directory = sys.argv[0]
-    server_address = sys.argv[1]
+    program_directory = sys.argv[1]
+    server_address = sys.argv[2]
     config_file = os.path.join(program_directory, CONFIG_FILENAME)
     if not os.path.isdir(program_directory) or not os.path.exists:
-        print("Bad program directory")
+        print("Bad program directory: {}".format(program_directory))
         return -1
     config_data = load_program(program_directory, config_file)
     checksum = register_program(server_address, config_data)
