@@ -1,6 +1,8 @@
 import json
 import os
+import pkgutil
 
+from lizard import PROGRAM_DATA_DIRNAME
 from lizard import util
 
 PROGRAM_SOURCE_FILE_NAMES = {
@@ -8,6 +10,8 @@ PROGRAM_SOURCE_FILE_NAMES = {
     'cpp_code': 'wrapper.cpp',
     'python_code': 'python_funcs.py',
 }
+
+ADDITIONAL_BUILD_FILES = ('Makefile', 'setup.py')
 
 
 class UserProg(object):
@@ -36,6 +40,13 @@ class UserProg(object):
             path = os.path.join(self.build_dir, filename)
             with open(path, 'w') as fp:
                 fp.write(code)
+        for build_file in ADDITIONAL_BUILD_FILES:
+            resource_path = os.path.join(
+                PROGRAM_DATA_DIRNAME, 'build_files', build_file)
+            data = pkgutil.get_data('lizard', resource_path)
+            path = os.path.join(self.build_dir, build_file)
+            with open(path, 'wb') as fp:
+                fp.write(data)
 
     def build(self):
         """
