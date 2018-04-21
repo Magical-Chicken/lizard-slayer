@@ -13,6 +13,7 @@ setuptools.setup(
     version=VERSION,
     description=DESCRIPTION,
     author=AUTHOR,
-    AUTHOR_EMAIL=AUTHOR_EMAIL,
-    packages=setuptools.find_packages(exclude=['tests'])
+    author_email=AUTHOR_EMAIL,
+    packages=setuptools.find_packages(exclude=['tests']),
+    package_data={'lizard': ['data/*', 'data/build_files/*']},
 )
