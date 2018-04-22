@@ -65,7 +65,7 @@ class UserProg(object):
             nvcc_path = os.path.join(cuda_bin, 'nvcc')
             make_cmd.append('NVCC={}'.format(nvcc_path))
         if include_path is not None:
-            include_path.append('CUDA_L64={}'.format(include_path))
+            make_cmd.append('CUDA_L64=-L{}'.format(include_path))
         LOG.debug('Building CUDA shared object')
         util.subp(make_cmd)
         # FIXME FIXME FIXME
