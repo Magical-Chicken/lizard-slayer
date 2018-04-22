@@ -32,7 +32,10 @@ def handle_event_register_prog(event):
         fp.write(data)
     program = user_prog.UserProg(name, checksum, data_file, build_dir=prog_dir)
     program.verify_checksum()
-    program.build()
+    with client.client_access() as c:
+        cuda_bin = c.args.bin
+        include_path = c.args.include
+    program.build(cuda_bin=cuda_bin, include_path=include_path)
     with client.client_access() as c:
         c.user_programs[checksum] = program
     LOG.info('Registered program: %s', program)

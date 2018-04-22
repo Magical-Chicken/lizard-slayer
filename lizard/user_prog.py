@@ -2,7 +2,7 @@ import json
 import os
 import pkgutil
 
-from lizard import PROGRAM_DATA_DIRNAME
+from lizard import LOG, PROGRAM_DATA_DIRNAME
 from lizard import util
 
 PROGRAM_SOURCE_FILE_NAMES = {
@@ -36,6 +36,7 @@ class UserProg(object):
 
     def _unpack(self):
         """unpack program files and set up build dir structure"""
+        LOG.debug('Extracting user program code')
         for code_key, filename in PROGRAM_SOURCE_FILE_NAMES.items():
             code = self.data['code'][code_key]
             path = os.path.join(self.build_dir, filename)
@@ -49,14 +50,24 @@ class UserProg(object):
             with open(path, 'wb') as fp:
                 fp.write(data)
 
-    def build(self):
+    def build(self, cuda_bin=None, include_path=None):
         """
         build the shared object and python wrapper module
         note that the build dir must exist and have user prog kernel in it
+        :cuda_bin: path to cuda tools bin
+        :include_path: path to cuda include dir
         """
         if not self.build_dir or not os.path.isdir(self.build_dir):
             raise ValueError("Build dir not set up")
         self._unpack()
+        make_cmd = ['make', '-C', self.build_dir]
+        if cuda_bin is not None:
+            nvcc_path = os.path.join(cuda_bin, 'nvcc')
+            make_cmd.append('NVCC={}'.format(nvcc_path))
+        if include_path is not None:
+            include_path.append('CUDA_L64={}'.format(include_path))
+        LOG.debug('Building CUDA shared object')
+        util.subp(make_cmd)
         # FIXME FIXME FIXME
         # finsih build process
 
