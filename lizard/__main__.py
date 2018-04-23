@@ -19,8 +19,7 @@ def run_client(args, tmpdir):
     :returns: 0 on success
     """
     # scan hardware
-    hardware = hardware_discovery.scan_hardware(args)
-    LOG.debug('hardware scan found: %s', hardware)
+    hardware = hardware_discovery.scan_hardware(args, tmpdir)
     # create client
     client.create_client(args, tmpdir, hardware)
     # automatically find available port
