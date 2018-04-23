@@ -8,7 +8,7 @@ NVOBJ = kernel.o
 CUDA_L64 =
 COMPUTE_LEVEL_FLAG =
 
-TARGET_SO = user_program_cuda.so
+TARGET_SO = libuser_program_cuda.so
 
 all: $(TARGET_SO)
 	@:
