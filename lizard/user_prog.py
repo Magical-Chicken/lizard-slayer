@@ -18,9 +18,7 @@ ADDITIONAL_BUILD_FILES = ('Makefile', 'setup.py')
 class UserProg(object):
     """A user program"""
 
-    def __init__(
-            self, name, checksum, data_file, build_dir=None,
-            ignore_data_file=False):
+    def __init__(self, name, checksum, data_file, build_dir=None):
         """
         UserProg init
         :name: human readable program name
@@ -34,9 +32,8 @@ class UserProg(object):
         self.checksum = checksum
         self.build_dir = build_dir
         self.data_file = data_file
-        if not ignore_data_file:
-            with open(self.data_file, 'r') as fp:
-                self.data = json.load(fp)
+        with open(self.data_file, 'r') as fp:
+            self.data = json.load(fp)
 
     def unpack(self):
         """unpack program files and set up build dir structure"""
@@ -61,23 +58,19 @@ class UserProg(object):
             with open(path, 'wb') as fp:
                 fp.write(data)
 
-    def build(
-            self, cuda_bin=None, include_path=None, unpack=True,
-            build_files=ADDITIONAL_BUILD_FILES):
+    def build(self, cuda_bin=None, include_path=None, unpack=True):
         """
         build the shared object and python wrapper module
         note that the build dir must exist and have user prog kernel in it
         :cuda_bin: path to cuda tools bin
         :include_path: path to cuda include dir
         :unpack: if true, unpack program json
-        :build_files: names of files to copy
         """
         if not self.build_dir or not os.path.isdir(self.build_dir):
             raise ValueError("Build dir not set up")
         if unpack:
             self.unpack()
-        if build_files:
-            self.copy_build_files(build_files=build_files)
+        self.copy_build_files()
         make_cmd = ['make', '-C', self.build_dir]
         if cuda_bin is not None:
             nvcc_path = os.path.join(cuda_bin, 'nvcc')
@@ -86,6 +79,9 @@ class UserProg(object):
             make_cmd.append('CUDA_L64=-L{}'.format(include_path))
         LOG.debug('Building CUDA shared object')
         util.subp(make_cmd)
+        if not self.data['info'].get('py_c_extention', True):
+            LOG.debug('No python c extention for user program')
+            return
         # FIXME FIXME FIXME
         # finsih build process
 

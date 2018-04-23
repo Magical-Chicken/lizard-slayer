@@ -4,6 +4,8 @@ info:
     data_flow_model: groupby_aggergate
     iterative: true
     kernel_type: cuda
+    # defaults to true
+    py_c_extention: true
 sources:
     python: empty.py
     cpp: empty_cmodule.cpp
