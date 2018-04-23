@@ -11,7 +11,7 @@ from contextlib import closing
 from lizard import LOG
 
 
-def subp(cmd, check=True):
+def subp(cmd, check=True, cwd=None):
     """
     run a subprocess
     :cmd: cmd to run as list of argv
@@ -19,7 +19,7 @@ def subp(cmd, check=True):
     :returns: tuple of stdout and stderr
     """
     res = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=check)
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, check=check)
     return res.stdout.decode(), res.stderr.decode()
 
 

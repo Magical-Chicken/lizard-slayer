@@ -177,7 +177,10 @@ class UserProg(object):
         if self.use_c_extention:
             # FIXME FIXME FIXME
             # finsih build process for c extention
-            raise NotImplementedError
+            LOG.debug('Building Python wrapper module')
+            # FIXME currently places compiled module in build_dir
+            setup_cmd = ['python3', 'setup.py', 'build_ext', '--inplace', ]
+            util.subp(setup_cmd, cwd=self.build_dir)
         else:
             LOG.debug('No python c extention for user program')
             self.ready = True
