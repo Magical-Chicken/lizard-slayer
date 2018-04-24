@@ -2,6 +2,7 @@ import ctypes
 import json
 import importlib
 import os
+import sys
 import pkgutil
 
 from lizard import LOG, PROGRAM_DATA_DIRNAME
@@ -36,6 +37,7 @@ class UserProg(object):
         self.checksum = checksum
         self.hardware = hardware
         self.build_dir = build_dir
+        self.module_dir = build_dir
         self.data_file = data_file
         with open(self.data_file, 'r') as fp:
             self.data = json.load(fp)
@@ -177,13 +179,35 @@ class UserProg(object):
         if self.use_c_extention:
             # FIXME FIXME FIXME
             # finsih build process for c extention
+
             LOG.debug('Building Python wrapper module')
             # FIXME currently places compiled module in build_dir
-            setup_cmd = ['python3', 'setup.py', 'build_ext', '--inplace', ]
+            setup_cmd = ['python3', 'setup.py', 'build_ext', '--inplace',
+                    '--rpath=' + self.module_dir]
+            LOG.info(setup_cmd)
             util.subp(setup_cmd, cwd=self.build_dir)
+            # FIXME remove path when deallocating
+            LOG.info("setting")
+            LOG.info(self.module_dir)
+            os.environ['LD_LIBRARY_PATH'] = self.module_dir
+            os.environ['RUN_LD_PATH'] = self.module_dir
+            sys.path.append(self.module_dir)
+            LOG.info("done")
         else:
             LOG.debug('No python c extention for user program')
             self.ready = True
+
+    def split_data(self, data):
+        """
+        splits the data into tasks using user defined functions
+        :returns: generator of tasks
+        """
+        LOG.info("env")
+        LOG.info(os.environ['LD_LIBRARY_PATH'])
+        import user_program
+        import python_funcs
+        return python_funcs.test()
+        # return python_funcs.split_data(data)
 
     @property
     def properties(self):
