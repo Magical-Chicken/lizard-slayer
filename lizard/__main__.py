@@ -1,7 +1,6 @@
 import functools
 import logging
 import sys
-import tempfile
 import threading
 import queue
 
@@ -114,8 +113,7 @@ def main():
     LOG.debug('running with args: %s', args)
 
     # create tmpdir and run handler
-    with tempfile.TemporaryDirectory(prefix='lizard-slayer-') as tmpdir:
-        LOG.info('Using tmpdir: %s', tmpdir)
+    with util.TempDir(preserve=args.keep_tmpdir) as tmpdir:
         return subcmd_handlers[args.subcmd](args, tmpdir)
 
 

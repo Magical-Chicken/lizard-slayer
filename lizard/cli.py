@@ -40,6 +40,10 @@ ARG_SETS = {
         (('--host',),
          {'help': 'server bind address', 'default': DEFAULT_BIND_ADDR,
           'action': 'store', 'metavar': 'ADDR'}),),
+    'TMPDIR': (
+        (('-k', '--keep-tmpdir'),
+         {'help': 'keep the tmpdir after the program exits',
+          'action': 'store_true', 'default': False}),),
     'CLUSTER': (
         (('--user',),
          {'help': 'username for ssh', 'required': True,
@@ -52,8 +56,8 @@ ARG_SETS = {
           'action': 'store', 'type': int, 'metavar': 'INT'}),),
 }
 SUBCMDS = {
-    'client': ('run client program', ('CONNECT', 'CUDA', 'LOG')),
-    'server': ('run server program', ('LOG', 'SERVER')),
+    'client': ('run client program', ('CONNECT', 'CUDA', 'LOG', 'TMPDIR')),
+    'server': ('run server program', ('LOG', 'SERVER', 'TMPDIR')),
     'cluster': ('run cluster program', ('LOG', 'CLUSTER', 'CONNECT')),
 }
 
@@ -127,6 +131,7 @@ def normalize_args(args):
         'CUDA': _normalize_cuda_args,
         'LOG': _empty_normalizer,
         'SERVER': _normalize_server_args,
+        'TMPDIR': _empty_normalizer,
         'CLUSTER': _empty_normalizer,
     }
 

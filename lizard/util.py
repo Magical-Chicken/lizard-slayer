@@ -1,10 +1,14 @@
 import hashlib
 import os
 import requests
+import shutil
 import socket
 import subprocess
+import tempfile
 import uuid
 from contextlib import closing
+
+from lizard import LOG
 
 
 def subp(cmd, check=True):
@@ -87,3 +91,38 @@ def make_api_req(
     if raise_for_status:
         res.raise_for_status()
     return res.json() if expect_json else res.text
+
+
+class TempDir(object):
+    """Temporary directory context manager that can keep tmpdir if needed"""
+
+    def __init__(self, preserve=False, prefix='lizard_slayer_'):
+        """
+        Init for TempDir
+        :preserve: preserve tempdir
+        :prefix: tmpdir name prefix
+        """
+        self.tempdir = None
+        self.preserve = preserve
+        self.prefix = prefix
+
+    def __enter__(self):
+        """
+        Create tempdir
+        :returns: tempdir path
+        """
+        self.tempdir = tempfile.mkdtemp(prefix=self.prefix)
+        LOG.debug('Using tempdir: %s', self.tempdir)
+        return self.tempdir
+
+    def __exit__(self, etype, value, trace):
+        """
+        Destroy tempdir if no errors occurred or preserve set
+        :etype: exception type
+        :value: exception value
+        :trace: exception traceback
+        """
+        if etype or self.preserve:
+            LOG.info('Preserving tempdir: %s', self.tempdir)
+        else:
+            shutil.rmtree(self.tempdir)
