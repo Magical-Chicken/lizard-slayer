@@ -12,8 +12,6 @@ PROGRAM_SOURCE_FILE_NAMES = {
     'header': 'program.h',
 }
 
-ADDITIONAL_BUILD_FILES = ('Makefile', 'setup.py')
-
 
 class UserProg(object):
     """A user program"""
@@ -35,16 +33,20 @@ class UserProg(object):
         with open(self.data_file, 'r') as fp:
             self.data = json.load(fp)
 
-    def unpack(self):
-        """unpack program files and set up build dir structure"""
+    def unpack(self, item_keys):
+        """
+        unpack program files and set up build dir structure
+        :item_keys: items to unpack
+        """
         LOG.debug('Extracting user program code')
-        for code_key, filename in PROGRAM_SOURCE_FILE_NAMES.items():
-            code = self.data['code'][code_key]
+        for key in item_keys:
+            filename = PROGRAM_SOURCE_FILE_NAMES[key]
+            code = self.data['code'][key]
             path = os.path.join(self.build_dir, filename)
             with open(path, 'w') as fp:
                 fp.write(code)
 
-    def copy_build_files(self, build_files=ADDITIONAL_BUILD_FILES):
+    def copy_build_files(self, build_files):
         """
         copy build files from data/build_files into build dir
         :build_files: names of files to copy
@@ -68,9 +70,14 @@ class UserProg(object):
         """
         if not self.build_dir or not os.path.isdir(self.build_dir):
             raise ValueError("Build dir not set up")
+        use_c_extention = self.data['info'].get('py_c_extention', True)
         if unpack:
-            self.unpack()
-        self.copy_build_files()
+            files = ['cuda', 'python', 'header']
+            if use_c_extention:
+                files.append('cpp')
+            self.unpack(files)
+        self.copy_build_files(
+            ('Makefile', 'setup.py') if use_c_extention else ('Makefile',))
         make_cmd = ['make', '-C', self.build_dir]
         if cuda_bin is not None:
             nvcc_path = os.path.join(cuda_bin, 'nvcc')
@@ -79,11 +86,12 @@ class UserProg(object):
             make_cmd.append('CUDA_L64=-L{}'.format(include_path))
         LOG.debug('Building CUDA shared object')
         util.subp(make_cmd)
-        if not self.data['info'].get('py_c_extention', True):
+        if use_c_extention:
+            # FIXME FIXME FIXME
+            # finsih build process for c extention
+            raise NotImplementedError
+        else:
             LOG.debug('No python c extention for user program')
-            return
-        # FIXME FIXME FIXME
-        # finsih build process
 
     @property
     def properties(self):
