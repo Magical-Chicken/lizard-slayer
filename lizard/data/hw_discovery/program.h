@@ -8,8 +8,8 @@ struct gpu_props {
     char name[256];
 };
 
-int get_num_gpus();
+extern "C" int get_num_gpus();
 
-void get_gpu_data(int gpu_index, struct gpu_props *props);
+extern "C" void get_gpu_data(int gpu_index, struct gpu_props *props);
 
 #endif

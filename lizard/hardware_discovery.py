@@ -1,3 +1,4 @@
+import ctypes
 import os
 import pkgutil
 
@@ -17,12 +18,28 @@ def check_cpus():
     return {'max_threads': int(data['CPU(s)']), 'name': data['Model name']}
 
 
+class GPUProps(ctypes.Structure):
+    """GPU properties struct"""
+    _fields_ = [
+        ('gpu_index', ctypes.c_int),
+        ('comp_level_major', ctypes.c_int),
+        ('comp_level_minor', ctypes.c_int),
+        ('sm_count', ctypes.c_int),
+        ('max_sm_threads', ctypes.c_int),
+        ('max_sm_blocks', ctypes.c_int),
+        ('max_block_size', ctypes.c_int),
+        ('max_total_threads', ctypes.c_int),
+        ('max_total_blocks', ctypes.c_int),
+        ('name', ctypes.c_char * 256),
+    ]
+
+
 def setup_cuda_detect(args, tmpdir):
     """
     set up CUDA detect program
     :args: parsed cmdline args
     :tmpdir: temporary directory
-    :returns: build user_prog
+    :returns: wrapped program
     """
     prog_dir = os.path.join(tmpdir, 'hw_detect')
     os.mkdir(prog_dir)
@@ -45,7 +62,11 @@ def setup_cuda_detect(args, tmpdir):
     program = user_prog.UserProg(
         'Hardware Discovery', checksum, data_file, build_dir=prog_dir)
     program.build(cuda_bin=args.bin, include_path=args.include, unpack=False)
-    return program
+    so_path = os.path.join(prog_dir, 'user_program_cuda.so')
+    wrapper = ctypes.cdll.LoadLibrary(so_path)
+    wrapper.get_num_gpus.restype = ctypes.c_int
+    wrapper.get_gpu_data.argtypes = [ctypes.c_int, ctypes.POINTER(GPUProps)]
+    return wrapper
 
 
 def check_gpus(args, tmpdir):
@@ -61,8 +82,26 @@ def check_gpus(args, tmpdir):
         return empty_result
     LOG.info('Checking CUDA build system')
     program = setup_cuda_detect(args, tmpdir)
-    # FIXME FIXME FIXME
-    return empty_result
+    res = {
+        'num_gpus': program.get_num_gpus(),
+        'gpu_info': [],
+    }
+    for gpu_index in range(res['num_gpus']):
+        props = GPUProps()
+        program.get_gpu_data(gpu_index, ctypes.byref(props))
+        res['gpu_info'].append({
+            'gpu_index': props.gpu_index,
+            'comp_level_major': props.comp_level_major,
+            'comp_level_minor': props.comp_level_minor,
+            'sm_count': props.sm_count,
+            'max_sm_threads': props.max_sm_threads,
+            'max_sm_blocks': props.max_sm_blocks,
+            'max_block_size': props.max_block_size,
+            'max_total_threads': props.max_total_threads,
+            'max_total_blocks': props.max_total_blocks,
+            'name': props.name,
+        })
+    return res
 
 
 def scan_hardware(args, tmpdir):
