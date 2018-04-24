@@ -1,4 +1,4 @@
-#include "scan.h"
+#include "program.h"
 #include <string.h>
 
 int get_num_gpus() {
