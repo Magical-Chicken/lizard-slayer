@@ -1,0 +1,12 @@
+info:
+    name: K Means Program Demo
+    version: 0.1
+    data_flow_model: groupby_aggergate
+    iterative: true
+    kernel_type: cuda
+sources:
+    python: kmeans.py
+    cpp: kmeans_module.cpp
+    header: kmeans.h
+    cuda: kmeans.cu
+code: {}

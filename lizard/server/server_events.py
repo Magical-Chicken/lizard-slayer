@@ -134,12 +134,44 @@ def handle_event_register_prog(event):
         s.post_all(
             '/programs', post_data, callback_func=callback_func,
             multi_callback_func=multi_callback_func)
+    program.build(cuda_bin='/opt/cuda-8.0/bin/',
+    include_path='/opt/cuda-8.0/lib64')
     # NOTE: timeout for registering program on all nodes set to 10 min
     wakeup_ev.wait(timeout=600)
     LOG.info('Registered user program: %s', program)
     with server.state_access() as s:
         s.registered_progs[checksum] = program
     return program.properties
+
+
+def handle_event_load_prog(event):
+    """
+    handle 'load_prog' event
+    data must include 'name', 'checksum' and 'data'
+    :event: event to handle
+    :returns: event result data if event sucessfully handled
+    :raises: Exception: if error occurs handling event
+    """
+
+    checksum = event.data['checksum']
+    data = event.data['data']
+    wakeup_ev = threading.Event()
+
+    def multi_callback_func(event_props):
+        wakeup_ev.set()
+
+    def callback_func(client, event_props):
+        if event_props['status'] != events.EventStatus.SUCCESS.value:
+            raise ValueError('{}: failed to load program'.format(client))
+        # client.registered_progs.append(checksum)
+
+    with server.state_access() as s:
+        program = s.registered_progs[checksum]
+
+    LOG.info(program.split_data(data))
+    # for task in program.split_data(data):
+
+
 
 
 SERVER_EVENT_HANDLER_MAP = {
