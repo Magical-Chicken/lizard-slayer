@@ -99,7 +99,7 @@ def check_gpus(args, tmpdir):
             'max_block_size': props.max_block_size,
             'max_total_threads': props.max_total_threads,
             'max_total_blocks': props.max_total_blocks,
-            'name': props.name,
+            'name': props.name.decode(),
         })
     return res
 
