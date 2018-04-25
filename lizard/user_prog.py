@@ -1,3 +1,4 @@
+import ctypes
 import json
 import os
 import pkgutil
@@ -92,6 +93,7 @@ class UserProg(object):
             raise NotImplementedError
         else:
             LOG.debug('No python c extention for user program')
+            self.ready = True
 
     @property
     def properties(self):
@@ -115,3 +117,81 @@ class UserProg(object):
     def __str__(self):
         """String representation for UserProg"""
         return "UserProg: {} checksum: {}".format(self.name, self.checksum)
+
+
+class UserProgRuntimeCTypes(object):
+    """User program runtime for ctypes programs"""
+
+    def __init__(self, info, prog, py_mod):
+        """
+        User program runtime init
+        :info: program conf info
+        :prog: user program cdll
+        :py_mod: user program python module
+        """
+        super().__init__(info)
+        self.prog = prog
+        self.py_mod = py_mod
+        self.dataset = None
+        self.agg_res = None
+        self.global_state = None
+        self.dataset_params = None
+
+    def _configure_functions(self):
+        """configure program function arg and res types"""
+        self.prog.setup_dataset.argtypes = [
+            ctypes.POINTER(self.py_mod.Dataset),
+            ctypes.POINTER(self.py_mod.DatasetParams),
+        ]
+        self.prog.setup_aggregation_result.argtypes = [
+            ctypes.POINTER(self.py_mod.AggregationResult),
+            ctypes.POINTER(self.py_mod.DatasetParams),
+        ]
+        self.prog.setup_global_state.argtypes = [
+            ctypes.POINTER(self.py_mod.GlobalState),
+            ctypes.POINTER(self.py_mod.DatasetParams),
+        ]
+        self.prog.free_dataset.argtypes = [
+            ctypes.POINTER(self.py_mod.Dataset),
+            ctypes.POINTER(self.py_mod.DatasetParams),
+        ]
+        self.prog.free_aggregation_result.argtypes = [
+            ctypes.POINTER(self.py_mod.AggregationResult),
+            ctypes.POINTER(self.py_mod.DatasetParams),
+        ]
+        self.prog.free_global_state.argtypes = [
+            ctypes.POINTER(self.py_mod.GlobalState),
+            ctypes.POINTER(self.py_mod.DatasetParams),
+        ]
+        self.prog.run_iteration.argtypes = [
+            ctypes.c_int, ctypes.c_int,
+            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.Dataset),
+            ctypes.POINTER(self.py_mod.GlobalState),
+            ctypes.POINTER(self.py_mod.AggregationResult),
+        ]
+
+    def prepare_datastructures(self, dataset_params):
+        """
+        prepare user program data structures
+        :dataset_params: instance of user prog's DatasetParams
+        """
+        self.dataset_params = dataset_params
+        self.dataset = self.py_mod.Dataset()
+        self.agg_res = self.py_mod.AggregationResult()
+        self.global_state = self.py_mod.GlobalState()
+        self.prog.setup_dataset(
+            ctypes.byref(self.dataset), ctypes.byref(self.dataset_params))
+        self.prog.setup_aggregation_result(
+            ctypes.byref(self.agg_res), ctypes.byref(self.dataset_params))
+        self.prog.setup_global_state(
+            ctypes.byref(self.global_state), ctypes.byref(self.dataset_params))
+
+    def free_datastructures(self):
+        """free memory allocated for storing program data"""
+        self.prog.free_dataset(
+            ctypes.byref(self.dataset), ctypes.byref(self.dataset_params))
+        self.prog.free_aggregation_result(
+            ctypes.byref(self.agg_res), ctypes.byref(self.dataset_params))
+        self.prog.free_global_state(
+            ctypes.byref(self.global_state), ctypes.byref(self.dataset_params))
