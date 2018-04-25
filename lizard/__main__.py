@@ -78,11 +78,12 @@ def run_cluster(args, tmpdir):
     :returns: 0 on success
     """
     # create cluster state
-    c = cluster.Cluster(args)
+    c = cluster.Cluster(args, tmpdir)
     # start cluster
     try:
         c.start()
     except KeyboardInterrupt:
+        # FIXME will kill all python processes including server
         c.kill()
     return 0
 
