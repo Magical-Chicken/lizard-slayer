@@ -18,7 +18,7 @@ typedef struct dataset_params {
 } dataset_params_t;
 
 extern "C" {
-    void run_iteration(int blocks, int block_size,
+    void run_iteration(int blocks, int block_size, dataset_params_t *params,
         dataset_t *data, global_state_t *state, agg_res_t *result);
     void setup_dataset(dataset_t *data, dataset_params_t *params);
     void setup_global_state(global_state_t *state, dataset_params_t *params);
