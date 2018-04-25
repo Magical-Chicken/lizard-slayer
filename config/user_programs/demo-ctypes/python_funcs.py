@@ -1,26 +1,27 @@
-from ctypes import Structure, c_int, POINTER
+from ctypes import c_int, POINTER
+import resources
 
 
-class GlobalState(Structure):
+class GlobalState(resources.EncodableStructure):
     _fields_ = [
         ('iteration', c_int),
         ('values', POINTER(c_int)),
     ]
 
 
-class AggregationResult(Structure):
+class AggregationResult(resources.EncodableStructure):
     _fields_ = [
         ('values', POINTER(c_int)),
     ]
 
 
-class Dataset(Structure):
+class Dataset(resources.EncodableStructure):
     _fields_ = [
         ('points', POINTER(POINTER(c_int))),
     ]
 
 
-class DatasetParams(Structure):
+class DatasetParams(resources.EncodableStructure):
     _fields_ = [
         ('dims', c_int),
         ('num_points', c_int),

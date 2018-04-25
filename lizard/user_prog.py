@@ -115,6 +115,8 @@ class UserProg(object):
         build_files = ['Makefile']
         if self.use_c_extention:
             build_files.append('setup.py')
+        else:
+            build_files.append('resources.py')
         self.copy_build_files(build_files)
         make_cmd = ['make', '-C', self.build_dir]
         if cuda_bin is not None:
