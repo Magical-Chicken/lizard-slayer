@@ -1,0 +1,14 @@
+info:
+    name: Demo CTypes
+    version: 0.1
+    data_flow_model: groupby_aggergate
+    iterative: true
+    kernel_type: cuda
+    # if true, build c extention, if false, use ctypes
+    # default is true
+    py_c_extention: false
+sources:
+    python: python_funcs.py
+    header: program.h
+    cuda: kernel.cu
+code: {}
