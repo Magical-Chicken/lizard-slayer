@@ -175,6 +175,34 @@ class UserProgRuntimeCTypes(object):
         self.agg_res = None
         self.global_state = None
         self.dataset_params = None
+        self._configure_functions()
+
+    def prepare_datastructures(self, dataset_params_enc):
+        """
+        prepare user program data structures
+        :dataset_params_enc: instance of user prog's DatasetParams
+        """
+        dataset_params = self.py_mod.DatasetParams()
+        dataset_params.decode(dataset_params_enc)
+        self.dataset_params = dataset_params
+        self.dataset = self.py_mod.Dataset()
+        self.agg_res = self.py_mod.AggregationResult()
+        self.global_state = self.py_mod.GlobalState()
+        self.prog.setup_dataset(
+            ctypes.byref(self.dataset), ctypes.byref(self.dataset_params))
+        self.prog.setup_aggregation_result(
+            ctypes.byref(self.agg_res), ctypes.byref(self.dataset_params))
+        self.prog.setup_global_state(
+            ctypes.byref(self.global_state), ctypes.byref(self.dataset_params))
+
+    def free_datastructures(self):
+        """free memory allocated for storing program data"""
+        self.prog.free_dataset(
+            ctypes.byref(self.dataset), ctypes.byref(self.dataset_params))
+        self.prog.free_aggregation_result(
+            ctypes.byref(self.agg_res), ctypes.byref(self.dataset_params))
+        self.prog.free_global_state(
+            ctypes.byref(self.global_state), ctypes.byref(self.dataset_params))
 
     def _configure_functions(self):
         """configure program function arg and res types"""
@@ -209,28 +237,3 @@ class UserProgRuntimeCTypes(object):
             ctypes.POINTER(self.py_mod.GlobalState),
             ctypes.POINTER(self.py_mod.AggregationResult),
         ]
-
-    def prepare_datastructures(self, dataset_params):
-        """
-        prepare user program data structures
-        :dataset_params: instance of user prog's DatasetParams
-        """
-        self.dataset_params = dataset_params
-        self.dataset = self.py_mod.Dataset()
-        self.agg_res = self.py_mod.AggregationResult()
-        self.global_state = self.py_mod.GlobalState()
-        self.prog.setup_dataset(
-            ctypes.byref(self.dataset), ctypes.byref(self.dataset_params))
-        self.prog.setup_aggregation_result(
-            ctypes.byref(self.agg_res), ctypes.byref(self.dataset_params))
-        self.prog.setup_global_state(
-            ctypes.byref(self.global_state), ctypes.byref(self.dataset_params))
-
-    def free_datastructures(self):
-        """free memory allocated for storing program data"""
-        self.prog.free_dataset(
-            ctypes.byref(self.dataset), ctypes.byref(self.dataset_params))
-        self.prog.free_aggregation_result(
-            ctypes.byref(self.agg_res), ctypes.byref(self.dataset_params))
-        self.prog.free_global_state(
-            ctypes.byref(self.global_state), ctypes.byref(self.dataset_params))

@@ -9,7 +9,25 @@ class ClientEventType(enum.Enum):
     INVALID_TYPE = 'invalid_type'
     REQ_SHUTDOWN = 'req_shutdown'
     REGISTER_PROG = 'register_prog'
-    REQ_RUN_PROG = 'req_run_prog'
+    INIT_RUNTIME = 'init_runtime'
+
+
+def handle_event_init_runtime(event):
+    """
+    handle 'init_runtime' event
+    :event: event to handle
+    :returns: program runtime id
+    """
+    prog_checksum = event.data['checksum']
+    dataset_params_enc = events.data['dataset_params_enc']
+    with client.client_access() as c:
+        program = c.user_programs[prog_checksum]
+    runtime = program.get_new_program_runtime()
+    runtime.prepare_datastructures(dataset_params_enc)
+    # FIXME FIXME FIXME
+    # load dataset
+    LOG.info('Loaded client program instance')
+    return {'runtime_id': runtime.runtime_id}
 
 
 def handle_event_register_prog(event):
@@ -44,6 +62,7 @@ def handle_event_register_prog(event):
 
 CLIENT_EVENT_HANDLER_MAP = {
     ClientEventType.REGISTER_PROG: handle_event_register_prog,
+    ClientEventType.INIT_RUNTIME: handle_event_init_runtime,
 }
 
 

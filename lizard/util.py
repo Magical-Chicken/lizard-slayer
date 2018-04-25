@@ -1,4 +1,6 @@
+import base64
 import hashlib
+import json
 import os
 import requests
 import shutil
@@ -38,6 +40,26 @@ def construct_sane_url(*args, prefix='http://'):
 def hex_uuid():
     """get a uuid"""
     return uuid.uuid4().hex
+
+
+def b64_json_enc(data):
+    """
+    encode data to b64 encoded json
+    :data: data to encode
+    :returns: encoded str
+    """
+    json_str = json.dumps(data)
+    return base64.b64encode(json_str.encode()).decode()
+
+
+def b64_json_dec(encoded):
+    """
+    decode data from b64 encoded json
+    :encoded: encoded str
+    :returns: data dict
+    """
+    json_str = base64.b64decode(encoded).decode()
+    return json.loads(json_str)
 
 
 def checksum(data):
