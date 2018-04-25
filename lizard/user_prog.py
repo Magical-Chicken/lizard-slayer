@@ -1,11 +1,13 @@
 import ctypes
 import json
+import importlib
 import os
 import pkgutil
 
 from lizard import LOG, PROGRAM_DATA_DIRNAME
 from lizard import util
 
+PROGRAM_SHARED_OBJ_NAME = 'user_program_cuda.so'
 PROGRAM_SOURCE_FILE_NAMES = {
     'cuda': 'kernel.cu',
     'cpp': 'wrapper.cpp',
@@ -26,6 +28,7 @@ class UserProg(object):
         :build_dir: if provided, directory to build code in
         :ignore_data_file: if true, ignore json data file
         """
+        self.program_runtimes = {}
         self.ready = False
         self.name = name
         self.checksum = checksum
@@ -33,6 +36,39 @@ class UserProg(object):
         self.data_file = data_file
         with open(self.data_file, 'r') as fp:
             self.data = json.load(fp)
+        self.use_c_extention = self.data['info'].get('py_c_extention', True)
+
+    def get_program_py_mod(self):
+        """
+        Get python module for the user program
+        :returns: python module
+        """
+        py_name = 'user_program.{}'.format(self.checksum)
+        py_file = PROGRAM_SOURCE_FILE_NAMES['python']
+        py_path = os.path.join(self.build_dir, py_file)
+        py_spec = importlib.util.spec_from_file_location(py_name, py_path)
+        py_mod = importlib.util.module_from_spec(py_spec)
+        py_spec.loader.exec_module(py_mod)
+        return py_mod
+
+    def get_new_program_runtime(self):
+        """
+        Get a new program runtime instance
+        :returns: runtime instance
+        """
+        if not self.ready:
+            raise ValueError("Cannot get program runtime, program not ready")
+        runtime_id = util.hex_uuid()
+        if self.use_c_extention:
+            raise NotImplementedError
+        else:
+            path = os.path.join(self.build_dir, PROGRAM_SHARED_OBJ_NAME)
+            prog = ctypes.cdll.LoadLibrary(path)
+            py_mod = self.get_program_py_mod()
+            runtime = UserProgRuntimeCTypes(
+                runtime_id, self.data['info'], prog, py_mod)
+        self.program_runtimes[runtime_id] = runtime
+        return runtime
 
     def unpack(self, item_keys):
         """
@@ -71,14 +107,15 @@ class UserProg(object):
         """
         if not self.build_dir or not os.path.isdir(self.build_dir):
             raise ValueError("Build dir not set up")
-        use_c_extention = self.data['info'].get('py_c_extention', True)
         if unpack:
             files = ['cuda', 'python', 'header']
-            if use_c_extention:
+            if self.use_c_extention:
                 files.append('cpp')
             self.unpack(files)
-        self.copy_build_files(
-            ('Makefile', 'setup.py') if use_c_extention else ('Makefile',))
+        build_files = ['Makefile']
+        if self.use_c_extention:
+            build_files.append('setup.py')
+        self.copy_build_files(build_files)
         make_cmd = ['make', '-C', self.build_dir]
         if cuda_bin is not None:
             nvcc_path = os.path.join(cuda_bin, 'nvcc')
@@ -87,7 +124,7 @@ class UserProg(object):
             make_cmd.append('CUDA_L64=-L{}'.format(include_path))
         LOG.debug('Building CUDA shared object')
         util.subp(make_cmd)
-        if use_c_extention:
+        if self.use_c_extention:
             # FIXME FIXME FIXME
             # finsih build process for c extention
             raise NotImplementedError
@@ -122,14 +159,16 @@ class UserProg(object):
 class UserProgRuntimeCTypes(object):
     """User program runtime for ctypes programs"""
 
-    def __init__(self, info, prog, py_mod):
+    def __init__(self, runtime_id, info, prog, py_mod):
         """
         User program runtime init
+        :runtime_id: program runtime uuid
         :info: program conf info
         :prog: user program cdll
         :py_mod: user program python module
         """
-        super().__init__(info)
+        self.runtime_id = runtime_id
+        self.info = info
         self.prog = prog
         self.py_mod = py_mod
         self.dataset = None
