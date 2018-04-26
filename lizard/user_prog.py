@@ -51,14 +51,15 @@ class UserProg(object):
         py_spec.loader.exec_module(py_mod)
         return py_mod
 
-    def get_new_program_runtime(self):
+    def get_new_program_runtime(self, runtime_id, hardware):
         """
         Get a new program runtime instance
+        :runtime_id: program runtime uuid
+        :hardware: hardware info dict
         :returns: runtime instance
         """
         if not self.ready:
             raise ValueError("Cannot get program runtime, program not ready")
-        runtime_id = util.hex_uuid()
         if self.use_c_extention:
             raise NotImplementedError
         else:
@@ -66,7 +67,7 @@ class UserProg(object):
             prog = ctypes.cdll.LoadLibrary(path)
             py_mod = self.get_program_py_mod()
             runtime = UserProgRuntimeCTypes(
-                runtime_id, self.data['info'], prog, py_mod)
+                runtime_id, hardware, self.data['info'], prog, py_mod)
         self.program_runtimes[runtime_id] = runtime
         return runtime
 
@@ -161,15 +162,17 @@ class UserProg(object):
 class UserProgRuntimeCTypes(object):
     """User program runtime for ctypes programs"""
 
-    def __init__(self, runtime_id, info, prog, py_mod):
+    def __init__(self, runtime_id, hardware, info, prog, py_mod):
         """
         User program runtime init
         :runtime_id: program runtime uuid
+        :hardware: hardware info struct
         :info: program conf info
         :prog: user program cdll
         :py_mod: user program python module
         """
         self.runtime_id = runtime_id
+        self.hardware = hardware
         self.info = info
         self.prog = prog
         self.py_mod = py_mod
@@ -177,12 +180,34 @@ class UserProgRuntimeCTypes(object):
         self.agg_res = None
         self.global_state = None
         self.dataset_params = None
+        self.blocks = 0
+        self.block_size = 0
         self._configure_functions()
+
+    def load_data(self, dataset_enc):
+        """
+        load dataset
+        :dataset_enc: encoded data
+        """
+        self.dataset.decode(dataset_enc)
+
+    def run_iteration(self, global_state_enc):
+        """
+        update global state, run iteration, and encode aggregation result
+        :global_state_enc: encoded global state
+        :returns: encoded aggregation result
+        """
+        self.global_state.decode(global_state_enc)
+        self.prog.run_iteration(
+            self.blocks, self.block_size, ctypes.byref(self.dataset_params),
+            ctypes.byref(self.dataset), ctypes.byref(self.global_state),
+            ctypes.byref(self.aggregation_result))
+        return self.aggregation_result.encode()
 
     def prepare_datastructures(self, dataset_params_enc):
         """
         prepare user program data structures
-        :dataset_params_enc: instance of user prog's DatasetParams
+        :dataset_params_enc: encoded dataset params
         """
         dataset_params = self.py_mod.DatasetParams()
         dataset_params.decode(dataset_params_enc)

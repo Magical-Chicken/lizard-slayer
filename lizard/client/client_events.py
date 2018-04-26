@@ -18,14 +18,16 @@ def handle_event_init_runtime(event):
     :event: event to handle
     :returns: program runtime id
     """
+    runtime_id = event.data['runtime_id']
+    dataset_enc = event.data['dataset_enc']
     prog_checksum = event.data['checksum']
-    dataset_params_enc = events.data['dataset_params_enc']
+    dataset_params_enc = event.data['dataset_params_enc']
     with client.client_access() as c:
         program = c.user_programs[prog_checksum]
-    runtime = program.get_new_program_runtime()
+        hardware = c.hardware
+    runtime = program.get_new_program_runtime(runtime_id, hardware)
     runtime.prepare_datastructures(dataset_params_enc)
-    # FIXME FIXME FIXME
-    # load dataset
+    runtime.load_data(dataset_enc)
     LOG.info('Loaded client program instance')
     return {'runtime_id': runtime.runtime_id}
 
