@@ -8,19 +8,20 @@ extern "C" {
     
 static PyObject *cuda_test(PyObject *self, PyObject *arg) {
     printf("hello world!\n");
+    printf("hello world!\n");
     //printf("In c: %s %s %i\n", PyUnicode_AsUTF8(arg->first), PyUnicode_AsUTF8(arg->last), arg->number);
 
-    Py_buffer view;
-    int r = PyObject_GetBuffer(arg, &view, 0);
-    printf("result: %i\n", r);
-    for (int i = 0; i< 3; i++) {
-        printf("%lf\n", ((double*)view.buf)[i]);
-        ((double *)view.buf)[i] = 122.2;
-    }
-    TYPE res = aggregate(view.buf, view.len, view.itemsize, 1, 1, 0);
+    //Py_buffer view;
+    //int r = PyObject_GetBuffer(arg, &view, 0);
+    //printf("result: %i\n", r);
+    //for (int i = 0; i< 3; i++) {
+        //printf("%lf\n", ((double*)view.buf)[i]);
+        //((double *)view.buf)[i] = 122.2;
+    //}
+    //TYPE res = aggregate(view.buf, view.len, view.itemsize, 1, 1, 0);
 
-    PyBuffer_Release(&view);
-    printf("result: %lf\n",res);
+    //PyBuffer_Release(&view);
+    //printf("result: %lf\n",res);
     return Py_None;
 }
 

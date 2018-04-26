@@ -1,6 +1,8 @@
 import ctypes
 import json
 import importlib
+import shutil
+import pathlib
 import os
 import sys
 import pkgutil
@@ -37,7 +39,6 @@ class UserProg(object):
         self.checksum = checksum
         self.hardware = hardware
         self.build_dir = build_dir
-        self.module_dir = build_dir
         self.data_file = data_file
         with open(self.data_file, 'r') as fp:
             self.data = json.load(fp)
@@ -176,23 +177,32 @@ class UserProg(object):
             LOG.warning('Using default compute level, not optimized')
         LOG.debug('Building CUDA shared object')
         util.subp(make_cmd)
-        if self.use_c_extention:
-            # FIXME FIXME FIXME
-            # finsih build process for c extention
 
+        if self.use_c_extention:
             LOG.debug('Building Python wrapper module')
-            # FIXME currently places compiled module in build_dir
-            setup_cmd = ['python3', 'setup.py', 'build_ext', '--inplace',
-                    '--rpath=' + self.module_dir]
-            LOG.info(setup_cmd)
+
+            # XXX
+            # FIXME create hardcoded tmp dir used by dynamic linker
+            shared_dll = 'user_program_cuda.so'
+            tmp_dir= '/tmp/lizard-slayer/'
+            pathlib.Path(tmp_dir).mkdir(exist_ok=True)
+            for the_file in os.listdir(tmp_dir):
+                file_path = os.path.join(tmp_dir, the_file)
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path): 
+                    shutil.rmtree(file_path)
+
+            setup_cmd = ['python3', 'setup.py', 'build_ext', '-b', tmp_dir]
+
             util.subp(setup_cmd, cwd=self.build_dir)
+            # copy over the shared library to be found by the linker
+            shutil.copyfile(os.path.join(self.build_dir, shared_dll),
+                    os.path.join(tmp_dir, shared_dll))
             # FIXME remove path when deallocating
-            LOG.info("setting")
-            LOG.info(self.module_dir)
-            os.environ['LD_LIBRARY_PATH'] = self.module_dir
-            os.environ['RUN_LD_PATH'] = self.module_dir
-            sys.path.append(self.module_dir)
-            LOG.info("done")
+            sys.path.append(tmp_dir)
+            sys.path.append(self.build_dir)
+            self.ready = True
         else:
             LOG.debug('No python c extention for user program')
             self.ready = True
@@ -202,12 +212,9 @@ class UserProg(object):
         splits the data into tasks using user defined functions
         :returns: generator of tasks
         """
-        LOG.info("env")
-        LOG.info(os.environ['LD_LIBRARY_PATH'])
-        import user_program
-        import python_funcs
-        return python_funcs.test()
+        # FIXME implement this
         # return python_funcs.split_data(data)
+        raise NotImplementedError
 
     @property
     def properties(self):

@@ -13,7 +13,7 @@ AUTHOR = "Wesley Wiedenmeier & William Lin"
 AUTHOR_EMAIL = "wesley.wiedenmeier@utexas.edu"
 
 cudamodule = Extension('user_program', sources=['wrapper.cpp'],
-    extra_link_args= ['-L.', '-luser_program_cuda'])
+        extra_link_args= ['-L.', '-l:user_program_cuda.so'])
 
 setuptools.setup(
     name=NAME,
