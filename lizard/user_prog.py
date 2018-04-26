@@ -190,6 +190,8 @@ class UserProgRuntimeCTypes(object):
         :dataset_enc: encoded data
         """
         self.dataset.decode(dataset_enc)
+        # FIXME FIXME FIXME
+        # calculate number of blocks and block size for processing dataset
 
     def run_iteration(self, global_state_enc):
         """

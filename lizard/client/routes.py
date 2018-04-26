@@ -95,6 +95,45 @@ def program_item(prog_hash):
         raise NotImplementedError
 
 
+@APP.route('/runtimes/<prog_hash>/<runtime_id>', methods=['POST'])
+def runtime_init(prog_hash, runtime_id):
+    """
+    POST /runtimes/<prog_hash>/<runtime_id>: init program runtime
+    :prog_hash: program checksum/identifier
+    :runtime_id: runtime uuid
+    :returns: flask response
+    """
+    data = request.get_json()
+    event_data = {
+        'checksum': prog_hash,
+        'runtime_id': runtime_id,
+        'dataset_enc': data['dataset_enc'],
+        'dataset_params_enc': data['dataset_params_enc'],
+    }
+    return respond_create_event(
+        'init_runtime', event_data,
+        send_remote_event=data.get('send_remote_event'))
+
+
+@APP.route('/runtimes/<prog_hash>/<runtime_id>/iterate', methods=['POST'])
+def run_iteration(prog_hash, runtime_id):
+    """
+    POST /runtimes/<prog_hash>/<runtime_id>/iterate: run iteration
+    :prog_hash: program checksum/identifier
+    :runtime_id: runtime uuid
+    :returns: flask response
+    """
+    data = request.get_json()
+    event_data = {
+        'checksum': prog_hash,
+        'runtime_id': runtime_id,
+        'global_state_enc': data['global_state_enc'],
+    }
+    return respond_create_event(
+        'run_iteration', event_data,
+        send_remote_event=data.get('send_remote_event'))
+
+
 @APP.route('/events/<event_id>', methods=['GET'])
 def event_item(event_id):
     """

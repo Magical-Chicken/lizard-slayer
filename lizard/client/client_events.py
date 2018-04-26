@@ -9,14 +9,24 @@ class ClientEventType(enum.Enum):
     INVALID_TYPE = 'invalid_type'
     REQ_SHUTDOWN = 'req_shutdown'
     REGISTER_PROG = 'register_prog'
+    RUN_ITERATION = 'run_iteration'
     INIT_RUNTIME = 'init_runtime'
+
+
+def handle_event_run_iteration(event):
+    """
+    handle 'run_iteration' event
+    :event: event to handle
+    :returns: event result
+    """
+    raise NotImplementedError
 
 
 def handle_event_init_runtime(event):
     """
     handle 'init_runtime' event
     :event: event to handle
-    :returns: program runtime id
+    :returns: event result
     """
     runtime_id = event.data['runtime_id']
     dataset_enc = event.data['dataset_enc']
@@ -29,7 +39,7 @@ def handle_event_init_runtime(event):
     runtime.prepare_datastructures(dataset_params_enc)
     runtime.load_data(dataset_enc)
     LOG.info('Loaded client program instance')
-    return {'runtime_id': runtime.runtime_id}
+    return {}
 
 
 def handle_event_register_prog(event):
@@ -64,6 +74,7 @@ def handle_event_register_prog(event):
 
 CLIENT_EVENT_HANDLER_MAP = {
     ClientEventType.REGISTER_PROG: handle_event_register_prog,
+    ClientEventType.RUN_ITERATION: handle_event_run_iteration,
     ClientEventType.INIT_RUNTIME: handle_event_init_runtime,
 }
 
