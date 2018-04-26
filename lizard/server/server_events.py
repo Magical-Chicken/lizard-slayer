@@ -167,8 +167,16 @@ def handle_event_load_prog(event):
 
     with server.state_access() as s:
         program = s.registered_progs[checksum]
+        clients = s.clients
 
-    LOG.info(program.split_data(data))
+    task_count = len(clients) 
+    # 8G gpu ram size
+    for c in client:
+        size = 8589934592
+
+
+    LOG.info(program.task_header(data))
+    # LOG.info(program.task_data(data))
     # for task in program.split_data(data):
 
 
