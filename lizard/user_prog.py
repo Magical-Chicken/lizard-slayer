@@ -199,7 +199,7 @@ class UserProg(object):
             # copy over the shared library to be found by the linker
             shutil.copyfile(os.path.join(self.build_dir, shared_dll),
                     os.path.join(tmp_dir, shared_dll))
-            # FIXME remove path when deallocating
+            # FIXME remove path 
             sys.path.append(tmp_dir)
             sys.path.append(self.build_dir)
             self.ready = True
@@ -207,14 +207,34 @@ class UserProg(object):
             LOG.debug('No python c extention for user program')
             self.ready = True
 
-    def split_data(self, data):
+    def task_header(self, data):
         """
         splits the data into tasks using user defined functions
+        :data: JSONEncoder supported data
+        :size: returned task should fit inside size bytes
         :returns: generator of tasks
         """
+        # FIXME
+        import python_funcs
+        return python_funcs.data_header(data)
+
+
+    def task_data(self, data):
+        """
+        splits the data into tasks using user defined functions
+        :data: JSONEncoder supported data
+        :size: returned task should fit inside size bytes
+        :returns: generator of tasks
+        """
+        import python_funcs
+
         # FIXME implement this
-        # return python_funcs.split_data(data)
-        raise NotImplementedError
+        data_header = python_funcs.data_header(data)
+        LOG.info(data_header)
+        l = python_funcs.split_data(data)
+        # LOG.info(l.next())
+        
+        # raise NotImplementedError
 
     @property
     def properties(self):
@@ -460,3 +480,26 @@ class UserProgRuntimeCTypes(object):
             ctypes.POINTER(self.py_mod.GlobalState),
             ctypes.POINTER(self.py_mod.AggregationResult),
         ]
+
+
+class UserProgRuntimeCExt(object):
+    """User program runtime for c extension programs"""
+    
+    def __init__(self):
+        """
+        User program runtime init
+        :runtime_id: program runtime uuid
+        :info: program conf info
+        :prog: user program cdll
+        :py_mod: user program python module
+        """
+        self.runtime_id = runtime_id
+        self.info = info
+        self.prog = prog
+        self.py_mod = py_mod
+        self.dataset = None
+        self.agg_res = None
+        self.global_state = None
+        self.dataset_params = None
+        self._configure_functions()
+
