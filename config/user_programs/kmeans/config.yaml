@@ -4,6 +4,7 @@ info:
     data_flow_model: groupby_aggergate
     iterative: true
     kernel_type: cuda
+    py_c_extention: true
 sources:
     python: kmeans.py
     cpp: kmeans_module.cpp
