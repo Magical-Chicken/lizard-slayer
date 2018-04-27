@@ -117,10 +117,21 @@ class UserProg(object):
             with open(path, 'wb') as fp:
                 fp.write(data)
 
+    def build_for_server(self):
+        """
+        set up only the user program resources needed for the server
+        """
+        if not self.build_dir or not os.path.isdir(self.build_dir):
+            raise ValueError("Build dir not set up")
+        if self.use_c_extention:
+            raise NotImplementedError
+        self.unpack(['python'])
+        self.copy_build_files(['resources.py'])
+        self.ready = True
+
     def build(self, cuda_bin=None, include_path=None, unpack=True):
         """
-        build the shared object and python wrapper module
-        note that the build dir must exist and have user prog kernel in it
+        set up user program resources and build shared obj
         :cuda_bin: path to cuda tools bin
         :include_path: path to cuda include dir
         :unpack: if true, unpack program json

@@ -103,7 +103,7 @@ class ServerState(object):
         self.tmpdir = tmpdir
         self.clients = {}
         self.registered_progs = {}
-        self.user_progs_dir = os.path.join(self.tmpdir, 'user_progs_raw')
+        self.user_progs_dir = os.path.join(self.tmpdir, 'user_progs_server')
         os.mkdir(self.user_progs_dir)
 
     def register_client(self, hardware, client_ip, client_port):

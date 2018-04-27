@@ -53,6 +53,7 @@ def handle_event_run_program(event):
             'checksum': prog_checksum,
             'dtaaset_enc': dataset_enc,
             'global_params_enc': global_params_enc,
+            'send_remote_event': True,
         }
         with server.state_access() as s:
             c = s.clients[client_uuid]
@@ -82,7 +83,6 @@ def handle_event_register_prog(event):
     :returns: event result data if event sucessfully handled
     :raises: Exception: if error occurs handling event
     """
-
     data = event.data['data']
     name = event.data['name']
     checksum = event.data['checksum']
@@ -98,10 +98,13 @@ def handle_event_register_prog(event):
 
     with server.state_access() as s:
         user_progs_dir = s.user_progs_dir
-    data_file = os.path.join(user_progs_dir, checksum)
+    prog_dir = os.path.join(user_progs_dir, checksum)
+    data_file = os.path.join(prog_dir, 'data.json')
+    os.mkdir(prog_dir)
     with open(data_file, 'w') as fp:
         fp.write(data)
-    program = user_prog.UserProg(name, checksum, data_file)
+    program = user_prog.UserProg(name, checksum, data_file, build_dir=prog_dir)
+    program.build_for_server()
     post_data = event.data.copy()
     post_data['send_remote_event'] = True
     with server.state_access() as s:
@@ -112,7 +115,6 @@ def handle_event_register_prog(event):
     wakeup_ev.wait(timeout=600)
     LOG.info('Registered user program: %s', program)
     with server.state_access() as s:
-        program.ready = True
         s.registered_progs[checksum] = program
     return program.properties
 
