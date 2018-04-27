@@ -25,6 +25,11 @@ def handle_event_run_iteration(event):
 def handle_event_init_runtime(event):
     """
     handle 'init_runtime' event
+    data must include:
+        - 'runtime_id',
+        - 'dataset_enc',
+        - 'checksum',
+        - 'global_params_enc'
     :event: event to handle
     :returns: event result
     """

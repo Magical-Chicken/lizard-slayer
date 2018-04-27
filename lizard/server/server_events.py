@@ -4,6 +4,7 @@ import threading
 
 from lizard import LOG
 from lizard import events, server, user_prog, util
+from lizard.server import remote_event
 
 
 class ServerEventType(enum.Enum):
@@ -24,10 +25,15 @@ def handle_event_run_program(event):
     dataset_enc = event.data['dataset_enc']
     prog_checksum = event.data['checksum']
     global_params_enc = event.data['global_params_enc']
+    init_path = os.path.join('/runtimes', prog_checksum, runtime_id)
     wakeup_ev = threading.Event()
 
     def multi_callback_wakeup(event_props):
         wakeup_ev.set()
+
+    def runtime_init_callback(client, event_props):
+        if event_props['status'] != events.EventStatus.SUCCESS.value:
+            raise ValueError('{}: error on prog runtime init'.format(client))
 
     with server.state_access() as s:
         program = s.registered_progs[prog_checksum]
@@ -36,12 +42,35 @@ def handle_event_run_program(event):
     runtime = program.get_new_server_runtime(runtime_id)
     runtime.prepare_datastructures(global_params_enc)
     runtime.partition_data(dataset_enc)
+    # FIXME FIXME FIXME
+    # get this information from data partitions
+    client_datasets = {}
+    client_datasets_enc = {c: d.encode() for c, d in client_datasets.items()}
+    runtime_init_remote_event_ids = []
+    for client_uuid, dataset_enc in client_datasets_enc.items():
+        data = {
+            'runtime_id': runtime_id,
+            'checksum': prog_checksum,
+            'dtaaset_enc': dataset_enc,
+            'global_params_enc': global_params_enc,
+        }
+        with server.state_access() as s:
+            c = s.clients[client_uuid]
+            res = c.post(init_path, data, callback_func=runtime_init_callback)
+            runtime_init_remote_event_ids.append(res['event_id'])
+    with remote_event.remote_events_access() as r:
+        r.register_multi_callback(
+            runtime_init_remote_event_ids, multi_callback_wakeup)
+    wakeup_ev.wait(timeout=300)
+    wakeup_ev.clear()
+    LOG.info('Runtime initialized for user program: %s', program)
 
     # FIXME FIXME FIXME
-    # load event data objs and gen events
-    # send out init_runtime events
-    # wait on init_runtime events
     # set up aggregation result
+    # send out run iteration events
+    # aggregate run iteration responses
+    # run global state update function
+    # reset
     raise NotImplementedError
 
 
