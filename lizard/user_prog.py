@@ -302,31 +302,31 @@ class UserProgRuntimeCTypes(object):
         """configure program function arg and res types"""
         self.prog.setup_dataset.argtypes = [
             ctypes.POINTER(self.py_mod.Dataset),
-            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.GlobalParams),
         ]
         self.prog.setup_aggregation_result.argtypes = [
             ctypes.POINTER(self.py_mod.AggregationResult),
-            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.GlobalParams),
         ]
         self.prog.setup_global_state.argtypes = [
             ctypes.POINTER(self.py_mod.GlobalState),
-            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.GlobalParams),
         ]
         self.prog.free_dataset.argtypes = [
             ctypes.POINTER(self.py_mod.Dataset),
-            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.GlobalParams),
         ]
         self.prog.free_aggregation_result.argtypes = [
             ctypes.POINTER(self.py_mod.AggregationResult),
-            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.GlobalParams),
         ]
         self.prog.free_global_state.argtypes = [
             ctypes.POINTER(self.py_mod.GlobalState),
-            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.GlobalParams),
         ]
         self.prog.run_iteration.argtypes = [
             ctypes.c_int, ctypes.c_int,
-            ctypes.POINTER(self.py_mod.DatasetParams),
+            ctypes.POINTER(self.py_mod.GlobalParams),
             ctypes.POINTER(self.py_mod.Dataset),
             ctypes.POINTER(self.py_mod.GlobalState),
             ctypes.POINTER(self.py_mod.AggregationResult),
