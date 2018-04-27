@@ -17,7 +17,7 @@ def handle_event_run_iteration(event):
     """
     handle 'run_iteration' event
     :event: event to handle
-    :returns: event result
+    :returns: aggregation result
     """
     raise NotImplementedError
 

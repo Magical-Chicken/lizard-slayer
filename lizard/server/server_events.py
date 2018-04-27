@@ -10,6 +10,16 @@ class ServerEventType(enum.Enum):
     INVALID_TYPE = 'invalid_type'
     REQ_SHUTDOWN = 'req_shutdown'
     REGISTER_PROG = 'register_prog'
+    RUN_PROGRAM = 'RUN_PROGRAM'
+
+
+def handle_event_run_program(event):
+    """
+    handle 'run_program' eent
+    :event: event to handle
+    :returns: program result
+    """
+    raise NotImplementedError
 
 
 def handle_event_register_prog(event):
@@ -57,6 +67,7 @@ def handle_event_register_prog(event):
 
 SERVER_EVENT_HANDLER_MAP = {
     ServerEventType.REGISTER_PROG: handle_event_register_prog,
+    ServerEventType.RUN_PROGRAM: handle_event_run_program,
 }
 
 
