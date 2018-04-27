@@ -31,12 +31,12 @@ def handle_event_init_runtime(event):
     runtime_id = event.data['runtime_id']
     dataset_enc = event.data['dataset_enc']
     prog_checksum = event.data['checksum']
-    dataset_params_enc = event.data['dataset_params_enc']
+    global_params_enc = event.data['global_params_enc']
     with client.client_access() as c:
         program = c.user_programs[prog_checksum]
         hardware = c.hardware
     runtime = program.get_new_program_runtime(runtime_id, hardware)
-    runtime.prepare_datastructures(dataset_params_enc)
+    runtime.prepare_datastructures(global_params_enc)
     runtime.load_data(dataset_enc)
     LOG.info('Loaded client program instance')
     return {}

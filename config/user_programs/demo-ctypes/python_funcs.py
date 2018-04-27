@@ -17,12 +17,13 @@ class AggregationResult(resources.EncodableStructure):
 
 class Dataset(resources.EncodableStructure):
     _fields_ = [
+        ('num_points', c_int),
         ('points', POINTER(POINTER(c_int))),
     ]
 
 
-class DatasetParams(resources.EncodableStructure):
+class GlobalParams(resources.EncodableStructure):
     _fields_ = [
         ('dims', c_int),
-        ('num_points', c_int),
+        ('max_iterations', c_int),
     ]
