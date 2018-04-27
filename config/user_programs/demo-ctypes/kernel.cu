@@ -1,5 +1,18 @@
 #include "program.h"
 
+/**
+ * NOTE: in a real program this would call into the cuda kernel
+ *       however, this is not a real program and does nothing interesting
+ */
+void run_iteration(int blocks, int block_size, global_params_t *params,
+        dataset_t *data, global_state_t *state, agg_res_t *result) {
+    int i, j;
+    for (i = 0; i < params->dims; i++) result->values[i] = 0;
+    for (i = 0; i < data->num_points; i++)
+        for (j = 0; j < params->dims; j++)
+            result->values[j] += data->points[i][j] * state->iteration;
+}
+
 void setup_dataset(dataset_t *data, global_params_t *params) {
     int i;
     cudaMallocManaged(&data->points, data->num_points * sizeof(int*));
@@ -8,9 +21,7 @@ void setup_dataset(dataset_t *data, global_params_t *params) {
 }
 
 void setup_global_state(global_state_t *state, global_params_t *params) {
-    int i;
     cudaMallocManaged(&state->values, params->dims * sizeof(int));
-    for (i = 0; i < params->dims; i++) state->values[i] = 0;
     state->iteration = 0;
 }
 
