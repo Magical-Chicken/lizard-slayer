@@ -1,8 +1,8 @@
 from ctypes import c_int, POINTER
-import resources
+from lizard import user_prog_resources
 
 
-class GlobalState(resources.EncodableStructure):
+class GlobalState(user_prog_resources.EncodableStructure):
     _fields_ = [
         ('iteration', c_int),
         ('values', POINTER(c_int)),
@@ -10,14 +10,14 @@ class GlobalState(resources.EncodableStructure):
     aux_field_names = ('values',)
 
 
-class AggregationResult(resources.EncodableStructure):
+class AggregationResult(user_prog_resources.EncodableStructure):
     _fields_ = [
         ('values', POINTER(c_int)),
     ]
     aux_field_names = ('values',)
 
 
-class Dataset(resources.EncodableStructure):
+class Dataset(user_prog_resources.EncodableStructure):
     _fields_ = [
         ('num_points', c_int),
         ('points', POINTER(POINTER(c_int))),
@@ -25,7 +25,7 @@ class Dataset(resources.EncodableStructure):
     aux_field_names = ('points',)
 
 
-class GlobalParams(resources.EncodableStructure):
+class GlobalParams(user_prog_resources.EncodableStructure):
     _fields_ = [
         ('dims', c_int),
         ('max_iterations', c_int),
