@@ -18,8 +18,8 @@ def subp(cmd, check=True, cwd=None):
     :check: if true, check return 0
     :returns: tuple of stdout and stderr
     """
-    res = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, check=check)
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=cwd, check=check)
     return res.stdout.decode(), res.stderr.decode()
 
 

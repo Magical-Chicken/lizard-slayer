@@ -49,7 +49,6 @@ def run_program(server_address, checksum, data_file):
     with open(data_file, 'r') as fp:
         data = fp.read()
     post_data = {
-        'checksum': checksum,
         'data': data,
     }
     requests.post(endpoint, json=post_data)

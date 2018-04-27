@@ -200,6 +200,35 @@ class ServerState(object):
             res_success, multi_callback_func)
         return res_success, failed_clients
 
+    def post_each(
+            self, endpoint, datasets, expect_json=True, callback_func=None,
+            multi_callback_func=None):
+        """
+        make a POST request with different data to each clients, does not raise
+        for bad status code
+        :endpoint: client api endpoint
+        :datasets: a dict of client_uuid mapping to data to be post as json,
+            data must be dict
+        :expect_json: if true, decode client responses as json
+        :callback_func: if set, expect event creation and register callback
+        :multi_callback_func: same as callback but after all clients return
+        :returns: tuple of successful results dict, failed client uuids
+        """
+        res_success = {}
+        failed_clients = []
+        for client_uuid, client in self.clients.items():
+            try:
+                res = client.post(
+                    endpoint, datasets[client_uuid], expect_json=expect_json,
+                    callback_func=callback_func)
+                res_success[client_uuid] = res
+            except OSError:
+                LOG.warning("Client failed event")
+                failed_clients.append(client_uuid)
+        self._register_multi_callback_from_remote(
+            res_success, multi_callback_func)
+        return res_success, failed_clients
+
     def delete_all(self, endpoint):
         """
         make a DELETE request to all clients, does not raise for bad status
