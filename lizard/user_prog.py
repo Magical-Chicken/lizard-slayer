@@ -66,7 +66,10 @@ class UserProg(object):
         if not self.ready:
             raise ValueError("Cannot get program runtime, program not ready")
         if self.use_c_extention:
-            raise NotImplementedError
+            # FIXME actually load the modules
+            py_mod = self.get_program_py_mod()
+            runtime = UserProgRuntimeCExt(
+                runtime_id, hardware, self.data['info'], None, py_mod)
         else:
             path = os.path.join(self.build_dir, PROGRAM_SHARED_OBJ_NAME)
             prog = ctypes.cdll.LoadLibrary(path)
@@ -85,7 +88,9 @@ class UserProg(object):
         if not self.ready:
             raise ValueError("Cannot get server runtime, program not ready")
         if self.use_c_extention:
-            raise NotImplementedError
+            py_mod = self.get_program_py_mod()
+            runtime = ServerRuntimeCExt(
+                runtime_id, hardware, self.data['info'], py_mod)
         else:
             py_mod = self.get_program_py_mod()
             runtime = ServerRuntimeCTypes(
@@ -126,9 +131,9 @@ class UserProg(object):
         """
         if not self.build_dir or not os.path.isdir(self.build_dir):
             raise ValueError("Build dir not set up")
-        if self.use_c_extention:
-            raise NotImplementedError
         self.unpack(['python'])
+        if not self.use_c_extention:
+            self.copy_build_files(['resources.py'])
         self.ready = True
 
     @property
@@ -184,13 +189,13 @@ class UserProg(object):
             # XXX
             # FIXME create hardcoded tmp dir used by dynamic linker
             shared_dll = 'user_program_cuda.so'
-            tmp_dir= '/tmp/lizard-slayer/'
+            tmp_dir = '/tmp/lizard-slayer/'
             pathlib.Path(tmp_dir).mkdir(exist_ok=True)
             for the_file in os.listdir(tmp_dir):
                 file_path = os.path.join(tmp_dir, the_file)
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
-                elif os.path.isdir(file_path): 
+                elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
 
             setup_cmd = ['python3', 'setup.py', 'build_ext', '-b', tmp_dir]
@@ -198,8 +203,8 @@ class UserProg(object):
             util.subp(setup_cmd, cwd=self.build_dir)
             # copy over the shared library to be found by the linker
             shutil.copyfile(os.path.join(self.build_dir, shared_dll),
-                    os.path.join(tmp_dir, shared_dll))
-            # FIXME remove path 
+                            os.path.join(tmp_dir, shared_dll))
+            # FIXME remove path
             sys.path.append(tmp_dir)
             sys.path.append(self.build_dir)
             self.ready = True
@@ -218,7 +223,6 @@ class UserProg(object):
         import python_funcs
         return python_funcs.data_header(data)
 
-
     def task_data(self, data):
         """
         splits the data into tasks using user defined functions
@@ -226,15 +230,9 @@ class UserProg(object):
         :size: returned task should fit inside size bytes
         :returns: generator of tasks
         """
+        # FIXME
         import python_funcs
-
-        # FIXME implement this
-        data_header = python_funcs.data_header(data)
-        LOG.info(data_header)
-        l = python_funcs.split_data(data)
-        # LOG.info(l.next())
-        
-        # raise NotImplementedError
+        return python_funcs.split_data(data)
 
     @property
     def properties(self):
@@ -482,10 +480,125 @@ class UserProgRuntimeCTypes(object):
         ]
 
 
+class ServerRuntimeCExt(object):
+    """Server program runtime for c extension programs"""
+
+    def __init__(self, runtime_id, hardware, info, py_mod):
+        """
+        Server runtime init
+        :runtime_id: program runtime uuid
+        :hardware: all clients hardware info dict
+        :info: program conf info
+        :py_mod: user program python module
+        """
+        self.done = False
+        self.runtime_id = runtime_id
+        self.hardware = hardware
+        self.py_mod = py_mod
+        self.info = info
+        self.global_state = None
+        self.global_params = None
+        self.top_level_aggregate = None
+        self.client_datasets = {}
+
+    @property
+    def global_state_encoded(self):
+        """
+        encoded global state
+        :return: encoded str
+        """
+        return self.global_state
+
+    @property
+    def top_level_aggregate_encoded(self):
+        """
+        encoded top level aggregation result
+        :returns: encoded str
+        """
+        return self.top_level_aggregate
+
+    @property
+    def dataset_partitions_encoded(self):
+        """
+        encoded dataset partitions
+        :returns: map of encoded partitions
+        """
+        return self.client_datasets
+
+    def prepare_datastructures(self, global_params_enc):
+        """
+        prepare user program data structures
+        :global_params_enc: encoded global params
+        """
+        pass
+        # self.global_params = self.py_mod.GlobalParams()
+        # self.global_params.decode(global_params_enc)
+        # FIXME FIXME FIXME
+        # set up python accessible datastructures for agg res and global state
+        # set up python accessible structure to hold dataset while partitioning
+
+    def partition_data(self, data):
+        """
+        load dataset and partition among clients
+        :data: data
+        """
+        client_uuids = list(self.hardware.keys())
+        client_count = len(client_uuids)
+        LOG.debug("data size %i", sys.getsizeof(data))
+        # FIXME this is a really rough estimate as the final calculation is done
+        # after casting to double
+        split_size = sys.getsizeof(data) // client_count
+        LOG.debug("split size %i", split_size)
+
+        data_generator = self.py_mod.split_data(data)
+        post_datasets = {}
+        for client_uuid in client_uuids:
+            LOG.info("Splitting data")
+            # FIXME use hardware scan to discover GPU mem size
+            # currently rounded slightly down to avoid overflowing in loop
+            # 8G gpu ram size
+            # gpu_mem_remaining = 8589934592
+            gpu_mem_remaining = 8500000000
+            split_remaining = split_size
+            data_count = 0
+
+            global_params_enc = self.py_mod.data_header(data)
+            dataset = []
+            # subtract params size
+            gpu_mem_remaining = (gpu_mem_remaining -
+                                 sys.getsizeof(global_params_enc))
+            try:
+                while split_remaining > 0 and gpu_mem_remaining > 0:
+                    next_split = next(data_generator)
+                    split_remaining = split_remaining - sys.getsizeof(next_split)
+                    gpu_mem_remaining = (gpu_mem_remaining -
+                                         sys.getsizeof(next_split))
+                    dataset.append(next_split)
+                    data_count = data_count + 1
+            except StopIteration:
+                pass
+
+            dataset_enc = [data_count, dataset]
+            self.client_datasets[client_uuid] = dataset_enc
+
+            # LOG.debug("client uuid %s", client_uuid)
+            # LOG.debug("data count: %i", data_count)
+            # LOG.debug("global_params_enc: %s", global_params_enc)
+            # post_datasets[client_uuid] = {
+                    # 'checksum': checksum,
+                    # 'dataset_enc': dataset_enc,
+                    # 'global_params_enc': global_params_enc,
+                    # 'data_count': data_count,
+                    # 'runtime_id': runtime_id,
+                    # 'send_remote_event': True,
+            # }
+        # return 
+
+
 class UserProgRuntimeCExt(object):
     """User program runtime for c extension programs"""
-    
-    def __init__(self):
+
+    def __init__(self, runtime_id, hardware, info, prog, py_mod):
         """
         User program runtime init
         :runtime_id: program runtime uuid
@@ -494,12 +607,42 @@ class UserProgRuntimeCExt(object):
         :py_mod: user program python module
         """
         self.runtime_id = runtime_id
+        self.hardware = hardware
         self.info = info
         self.prog = prog
         self.py_mod = py_mod
         self.dataset = None
         self.agg_res = None
         self.global_state = None
-        self.dataset_params = None
-        self._configure_functions()
+        self.global_params = None
+        self.blocks = 0
+        self.block_size = 0
+        # self._configure_functions()
 
+    def load_data(self, dataset_enc):
+        """
+        load dataset
+        :dataset_enc: encoded data
+        """
+        LOG.info('in load_data')
+        LOG.info('first line of data:')
+        LOG.info(dataset_enc[0])
+        # LOG.info('in load_data')
+        # FIXME FIXME FIXME
+        # calculate number of blocks and block size for processing dataset
+
+    def run_iteration(self, global_state_enc):
+        """
+        update global state, run iteration, and encode aggregation result
+        :global_state_enc: encoded global state
+        :returns: encoded aggregation result
+        """
+
+    def prepare_datastructures(self, dataset_params_enc):
+        """
+        prepare user program data structures
+        :dataset_params_enc: encoded dataset params
+        """
+
+    def free_datastructures(self):
+        """free memory allocated for storing program data"""

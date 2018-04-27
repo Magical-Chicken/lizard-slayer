@@ -8,9 +8,11 @@ def test():
     return 'test func'
 
 def data_header(data):
-    # return next(split_iter(data)).split()
-    d = data.split('\n')
-    return d[0].split()
+
+    # get first line
+    index = data.find('\n')
+    # split count and dim
+    return list(map(int,data[:index].split()))
 
 def split_data(data):
 
@@ -19,6 +21,13 @@ def split_data(data):
     # skip first line
     # next(it)
     d = data.split('\n')
-    generator = (line.split()[1:] for line in d)
+
+    # file layout:
+    # count dim
+    # 1 d1 d2 d3 .....\n
+    # 2 d1 d2 d3 .....\n
+    # 3 d1 d2 d3 .....\n
+    ...
+    generator = (list(map(float, line.split()[1:])) for line in d[1:-1])
 
     return generator
