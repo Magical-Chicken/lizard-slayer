@@ -29,6 +29,7 @@ class UserProg(object):
         :ignore_data_file: if true, ignore json data file
         """
         self.program_runtimes = {}
+        self.server_runtimes = {}
         self.ready = False
         self.name = name
         self.checksum = checksum
@@ -69,6 +70,24 @@ class UserProg(object):
             runtime = UserProgRuntimeCTypes(
                 runtime_id, hardware, self.data['info'], prog, py_mod)
         self.program_runtimes[runtime_id] = runtime
+        return runtime
+
+    def get_new_server_runtime(self, runtime_id, hardware):
+        """
+        Get a new server program runtime instance
+        :runtime_id: program runtime uuid
+        :hardware: all clients hardware info dict
+        :returns: runtime instance
+        """
+        if not self.ready:
+            raise ValueError("Cannot get server runtime, program not ready")
+        if self.use_c_extention:
+            raise NotImplementedError
+        else:
+            py_mod = self.get_program_py_mod()
+            runtime = ServerRuntimeCTypes(
+                runtime_id, hardware, self.data['info'], py_mod)
+        self.server_runtimes[runtime_id] = runtime
         return runtime
 
     def unpack(self, item_keys):
@@ -159,6 +178,45 @@ class UserProg(object):
         return "UserProg: {} checksum: {}".format(self.name, self.checksum)
 
 
+class ServerRuntimeCTypes(object):
+    """Server program runtime for ctypes programs"""
+
+    def __init__(self, runtime_id, hardware, info, py_mod):
+        """
+        Server runtime init
+        :runtime_id: program runtime uuid
+        :hardware: all clients hardware info dict
+        :info: program conf info
+        :py_mod: user program python module
+        """
+        self.runtime_id = runtime_id
+        self.hardware = hardware
+        self.py_mod = py_mod
+        self.info = info
+        self.main_dataset = None
+        self.agg_res = None
+        self.global_state = None
+        self.global_params = None
+
+    def prepare_datastructures(self, global_params_enc):
+        """
+        prepare user program data structures
+        :global_params_enc: encoded global params
+        """
+        self.global_params = self.py_mod.GlobalParams()
+        self.global_params.decode(global_params_enc)
+        # FIXME FIXME FIXME
+        # set up python accessible datastructures for agg res and global state
+        # set up python accessible structure to hold dataset while partitioning
+
+    def partition_data(self, dataset_enc):
+        """
+        load dataset and partition among clients
+        :dataset_enc: encoded data
+        """
+        raise NotImplementedError
+
+
 class UserProgRuntimeCTypes(object):
     """User program runtime for ctypes programs"""
 
@@ -209,7 +267,7 @@ class UserProgRuntimeCTypes(object):
     def prepare_datastructures(self, global_params_enc):
         """
         prepare user program data structures
-        :global_params_enc: encoded dataset params
+        :global_params_enc: encoded global params
         """
         self.global_params = self.py_mod.GlobalParams()
         self.global_params.decode(global_params_enc)

@@ -7,12 +7,14 @@ class GlobalState(resources.EncodableStructure):
         ('iteration', c_int),
         ('values', POINTER(c_int)),
     ]
+    aux_field_names = ('values',)
 
 
 class AggregationResult(resources.EncodableStructure):
     _fields_ = [
         ('values', POINTER(c_int)),
     ]
+    aux_field_names = ('values',)
 
 
 class Dataset(resources.EncodableStructure):
@@ -20,6 +22,7 @@ class Dataset(resources.EncodableStructure):
         ('num_points', c_int),
         ('points', POINTER(POINTER(c_int))),
     ]
+    aux_field_names = ('points',)
 
 
 class GlobalParams(resources.EncodableStructure):

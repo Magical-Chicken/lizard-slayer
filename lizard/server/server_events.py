@@ -3,7 +3,7 @@ import os
 import threading
 
 from lizard import LOG
-from lizard import events, server, user_prog
+from lizard import events, server, user_prog, util
 
 
 class ServerEventType(enum.Enum):
@@ -18,7 +18,30 @@ def handle_event_run_program(event):
     handle 'run_program' eent
     :event: event to handle
     :returns: program result
+    :raises: Exception: if error occurs or invalid request
     """
+    runtime_id = util.hex_uuid()
+    dataset_enc = event.data['dataset_enc']
+    prog_checksum = event.data['checksum']
+    global_params_enc = event.data['global_params_enc']
+    wakeup_ev = threading.Event()
+
+    def multi_callback_wakeup(event_props):
+        wakeup_ev.set()
+
+    with server.state_access() as s:
+        program = s.registered_progs[prog_checksum]
+    if not program.ready:
+        raise ValueError('cannot run program, not ready')
+    runtime = program.get_new_server_runtime(runtime_id)
+    runtime.prepare_datastructures(global_params_enc)
+    runtime.partition_data(dataset_enc)
+
+    # FIXME FIXME FIXME
+    # load event data objs and gen events
+    # send out init_runtime events
+    # wait on init_runtime events
+    # set up aggregation result
     raise NotImplementedError
 
 
