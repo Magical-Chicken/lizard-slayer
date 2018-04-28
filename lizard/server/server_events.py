@@ -93,12 +93,10 @@ def handle_event_run_program(event):
             break
 
     LOG.info('Finished running user program: %s', program)
-    # FIXME FIXME FIXME
-    # send out run iteration events
-    # aggregate run iteration responses
-    # run global state update function
-    # reset
-    raise NotImplementedError
+    return {
+        'end_aggregate': runtime.top_level_aggregate,
+        'end_global_state': runtime.global_state,
+    }
 
 
 def handle_event_register_prog(event):
