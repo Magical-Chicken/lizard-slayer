@@ -205,6 +205,7 @@ class ServerRuntimeCTypes(object):
         self.main_dataset = None
         self.global_state = None
         self.global_params = None
+        self.client_datasets = {}
 
     def prepare_datastructures(self, global_params_enc):
         """
@@ -227,7 +228,7 @@ class ServerRuntimeCTypes(object):
 
     def partition_data(self, dataset_enc):
         """
-        load dataset and partition among clients
+        load dataset, divides workload, sets up client datasets
         :dataset_enc: encoded data
         """
         # NOTE: this is a very simple implementation of partitioning
@@ -236,7 +237,19 @@ class ServerRuntimeCTypes(object):
         #       this does not efficiently make use of a hetrogenous cluster
         self.main_dataset = self.py_mod.Dataset()
         self.main_dataset.decode(dataset_enc, self.global_params)
-        raise NotImplementedError
+        client_uuids = list(self.hardware.keys())
+        workunit_size = int(len(self.main_dataset) / len(client_uuids))
+        splits = []
+        for i in range(len(client_uuids)):
+            splits.append({'idx': i * workunit_size, 'size': workunit_size})
+        if len(self.main_dataset) % len(client_uuids) != 0:
+            allocated = workunit_size * len(client_uuids)
+            splits[-1]['size'] = len(self.main_dataset) - allocated
+        for client_uuid, split in zip(client_uuids, splits):
+            dataset = self.py_mod.get_dataset_slice(
+                self.global_params, self.main_dataset,
+                split['idx'], split['size'])
+            self.client_datasets[client_uuid] = dataset
 
 
 class UserProgRuntimeCTypes(object):
