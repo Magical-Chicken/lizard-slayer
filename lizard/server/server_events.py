@@ -26,6 +26,7 @@ def handle_event_run_program(event):
     prog_checksum = event.data['checksum']
     global_params_enc = event.data['global_params_enc']
     init_path = os.path.join('/runtimes', prog_checksum, runtime_id)
+    iterate_path = os.path.join(init_path, 'iterate')
     wakeup_ev = threading.Event()
 
     def multi_callback_wakeup(event_props):
@@ -51,7 +52,7 @@ def handle_event_run_program(event):
         data = {
             'runtime_id': runtime_id,
             'checksum': prog_checksum,
-            'dtaaset_enc': dataset_enc,
+            'dataset_enc': dataset_enc,
             'global_params_enc': global_params_enc,
             'send_remote_event': True,
         }
@@ -65,9 +66,34 @@ def handle_event_run_program(event):
     wakeup_ev.wait(timeout=300)
     wakeup_ev.clear()
     LOG.info('Runtime initialized for user program: %s', program)
+    aggregation_lock = threading.Lock()
 
+    def run_iteration_callback(client, event_props):
+        if event_props['status'] != events.EventStatus.SUCCESS.value:
+            raise ValueError('{}: error running prog iteration'.format(client))
+        with aggregation_lock:
+            runtime.aggregate(event_props['result']['aggregation_result_enc'])
+
+    while True:
+        post_data = {
+            'runtime_id': runtime_id,
+            'checksum': prog_checksum,
+            'global_state_enc': runtime.global_state.enc(),
+        }
+        with server.state_access() as s:
+            s.post_all(
+                iterate_path, post_data, callback_func=run_iteration_callback,
+                multi_callback_func=multi_callback_wakeup)
+        wakeup_ev.wait(timeout=600)
+        wakeup_ev.clear()
+        runtime.reset_aggregation_result()
+        runtime.update_global_state()
+        LOG.debug('Completed iteration for user program: %s', program)
+        if runtime.done:
+            break
+
+    LOG.info('Finished running user program: %s', program)
     # FIXME FIXME FIXME
-    # set up aggregation result
     # send out run iteration events
     # aggregate run iteration responses
     # run global state update function

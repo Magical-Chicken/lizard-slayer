@@ -234,11 +234,13 @@ class ServerRuntimeCTypes(object):
         self.py_mod.aggregate(
             self.global_params, self.top_level_aggregate, partial_result)
 
-    def update_global_state(self, aggregation_result):
+    def update_global_state(self, aggregation_result=None):
         """
         update runtime global state object
-        :aggregation_result: aggregation result
+        :aggregation_result: aggregation result, if not specified use top level
         """
+        if not aggregation_result:
+            aggregation_result = self.top_level_aggregate
         self.global_state = self.py_mod.update_global_state(
             self.global_params, aggregation_result, self.global_state)
         if self.global_state.done:
