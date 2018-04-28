@@ -26,7 +26,14 @@ def b64_json_dec(encoded):
 class EncodableStructure(ctypes.Structure):
     """Base class for encodable ctypes structures"""
     _fields_ = []
+    # NOTE: dynamic alloc fields must be non void pointer types
     dynamic_alloc_fields = []
+
+    def __len__(self):
+        """
+        len() *must* be defined for dataset objects, optional for others
+        """
+        pass
 
     def encode(self, global_params):
         """
@@ -56,6 +63,24 @@ class EncodableStructure(ctypes.Structure):
             setattr(self, field, data[field])
         if len(self.aux_field_names) > 0:
             self.decode_dynamic(data['dynamic'], global_params)
+
+    def get_ref(self, field):
+        """
+        get field reference, reverting to aux datastructures if no backing
+        :field: field name string
+        :returns: value of field
+        :raises: AttributeError:
+        """
+        if field in self.dynamic_alloc_fields and not getattr(self, field):
+            field = '{}_aux'.format(field)
+        return getattr(self, field)
+
+    def init_aux_structures(self, global_params):
+        """
+        initialize auxilary datastructures
+        :global_params: global paramters object
+        """
+        raise NotImplementedError
 
     def encode_dynamic(self, global_params):
         """
