@@ -17,9 +17,16 @@ def handle_event_run_iteration(event):
     """
     handle 'run_iteration' event
     :event: event to handle
-    :returns: aggregation result
+    :returns: event result with encoded aggregation result
     """
-    raise NotImplementedError
+    runtime_id = event.data['runtime_id']
+    prog_checksum = event.data['checksum']
+    global_state_enc = event.data['global_state_enc']
+    with client.client_access() as c:
+        program = c.user_programs[prog_checksum]
+        runtime = program.program_runtimes[runtime_id]
+    aggregation_result_enc = runtime.run_iteration(global_state_enc)
+    return {'aggregation_result_enc': aggregation_result_enc}
 
 
 def handle_event_init_runtime(event):
