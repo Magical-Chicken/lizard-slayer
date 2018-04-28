@@ -52,6 +52,8 @@ def update_global_state(global_params, aggregation_result, global_state):
     agg_res_values_ref = aggregation_result.get_ref('values')
     for i in range(global_params.dims):
         values_ref[i] = agg_res_values_ref[i]
+    if global_state.iteration >= global_params.max_iterations:
+        global_state.done = True
     return global_state
 
 
@@ -87,6 +89,8 @@ class GlobalState(user_prog_resources.EncodableStructure):
         ('values', POINTER(c_int)),
     ]
     aux_field_names = ('values',)
+    # NOTE: all GlobalState objects must have a boolean 'done' attribute
+    done = False
 
     def init_aux_structures(self, global_params):
         """
@@ -219,3 +223,4 @@ class GlobalParams(user_prog_resources.EncodableStructure):
         ('dims', c_int),
         ('max_iterations', c_int),
     ]
+    # NOTE: GlobalParams objects cannot have dynamically allocated data fields

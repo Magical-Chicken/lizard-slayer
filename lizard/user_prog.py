@@ -197,12 +197,12 @@ class ServerRuntimeCTypes(object):
         :info: program conf info
         :py_mod: user program python module
         """
+        self.done = False
         self.runtime_id = runtime_id
         self.hardware = hardware
         self.py_mod = py_mod
         self.info = info
         self.main_dataset = None
-        self.agg_res = None
         self.global_state = None
         self.global_params = None
 
@@ -212,16 +212,30 @@ class ServerRuntimeCTypes(object):
         :global_params_enc: encoded global params
         """
         self.global_params = self.py_mod.GlobalParams()
-        self.global_params.decode(global_params_enc)
-        # FIXME FIXME FIXME
-        # set up python accessible datastructures for agg res and global state
-        # set up python accessible structure to hold dataset while partitioning
+        self.global_params.decode(global_params_enc, None)
+        self.global_state = self.py_mod.init_global_state(self.global_params)
+
+    def update_global_state(self, aggregation_result):
+        """
+        update runtime global state object
+        :aggregation_result: aggregation result
+        """
+        self.global_state = self.py_mod.update_global_state(
+            self.global_params, aggregation_result, self.global_state)
+        if self.global_state.done:
+            self.done = True
 
     def partition_data(self, dataset_enc):
         """
         load dataset and partition among clients
         :dataset_enc: encoded data
         """
+        # NOTE: this is a very simple implementation of partitioning
+        #       this divides workload evenly between clients
+        #       this does not check that the workunits will fit on the client
+        #       this does not efficiently make use of a hetrogenous cluster
+        self.main_dataset = self.py_mod.Dataset()
+        self.main_dataset.decode(dataset_enc, self.global_params)
         raise NotImplementedError
 
 
@@ -255,7 +269,7 @@ class UserProgRuntimeCTypes(object):
         load dataset
         :dataset_enc: encoded data
         """
-        self.dataset.decode(dataset_enc)
+        self.dataset.decode(dataset_enc, self.global_params)
         # FIXME FIXME FIXME
         # calculate number of blocks and block size for processing dataset
 
@@ -265,7 +279,7 @@ class UserProgRuntimeCTypes(object):
         :global_state_enc: encoded global state
         :returns: encoded aggregation result
         """
-        self.global_state.decode(global_state_enc)
+        self.global_state.decode(global_state_enc, self.global_params)
         self.prog.run_iteration(
             self.blocks, self.block_size, ctypes.byref(self.global_params),
             ctypes.byref(self.dataset), ctypes.byref(self.global_state),
@@ -278,7 +292,7 @@ class UserProgRuntimeCTypes(object):
         :global_params_enc: encoded global params
         """
         self.global_params = self.py_mod.GlobalParams()
-        self.global_params.decode(global_params_enc)
+        self.global_params.decode(global_params_enc, None)
         self.dataset = self.py_mod.Dataset()
         self.agg_res = self.py_mod.AggregationResult()
         self.global_state = self.py_mod.GlobalState()
