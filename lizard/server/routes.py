@@ -4,7 +4,6 @@ import json
 from lizard.server import APP
 from lizard.server import remote_event, server_events
 from lizard import server, events
-from lizard import LOG
 
 API_MIME_TYPE = 'application/json'
 
@@ -95,9 +94,8 @@ def client_item(client_id):
                 respond_error(404))
     elif request.method == 'DELETE':
         with server.state_access() as state:
-            res = state.clients.pop(client_id, None)
-            LOG.info('Deleted client: %s', res)
-        return Response("ok") if res is not None else respond_error(404)
+            client = state.unregister_client(client_id)
+        return Response("ok") if client is not None else respond_error(404)
 
 
 @APP.route('/programs', methods=['GET', 'POST'])

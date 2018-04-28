@@ -37,9 +37,10 @@ def handle_event_run_program(event):
 
     with server.state_access() as s:
         program = s.registered_progs[prog_checksum]
+        all_hardware = s.all_clients_hardware
     if not program.ready:
         raise ValueError('cannot run program, not ready')
-    runtime = program.get_new_server_runtime(runtime_id)
+    runtime = program.get_new_server_runtime(runtime_id, all_hardware)
     runtime.prepare_datastructures(global_params_enc)
     runtime.partition_data(dataset_enc)
     # FIXME FIXME FIXME

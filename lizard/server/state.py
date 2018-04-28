@@ -103,6 +103,7 @@ class ServerState(object):
         self.tmpdir = tmpdir
         self.clients = {}
         self.registered_progs = {}
+        self.all_clients_hardware = {}
         self.user_progs_dir = os.path.join(self.tmpdir, 'user_progs_server')
         os.mkdir(self.user_progs_dir)
 
@@ -119,8 +120,21 @@ class ServerState(object):
         self.clients[client_uuid] = ClientState(client_uuid, hardware, url)
         with remote_event.remote_events_access() as r:
             r.register_client(client_uuid)
+        self.all_clients_hardware[client_uuid] = hardware
         LOG.info('Registered client: %s', self.clients[client_uuid])
         return client_uuid
+
+    def unregister_client(self, client_uuid):
+        """
+        unregister a client with the server
+        :client_uuid: client uuid
+        :returns: client object
+        """
+        self.all_clients_hardware.pop(client_uuid, None)
+        client = self.clients.pop(client_uuid, None)
+        if client:
+            LOG.info('Deleted client: %s', client)
+        return client
 
     def _register_multi_callback_from_remote(self, results, callback_func):
         """
