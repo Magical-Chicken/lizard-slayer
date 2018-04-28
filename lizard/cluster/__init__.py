@@ -11,6 +11,8 @@ END = '.cs.utexas.edu'
 CUDA_BIN = '/opt/cuda-8.0/bin/'
 CUDA_INCLUDE = '/opt/cuda-8.0/lib64/'
 
+LD_LIBRARY_PATH = '/tmp/lizard-slayer/'
+
 
 class Cluster(object):
     """Main cluster object"""
@@ -33,8 +35,8 @@ class Cluster(object):
     def start(self):
         """start cluster"""
 
-        cmd = "cd {}; python3 -m {} client -p {} -a {} -b {} -i {}".format(
-                NAME, MODULE_NAME, self.args.port, self.args.addr, CUDA_BIN,
+        cmd = "cd {}; LD_LIBRARY_PATH={} python3 -m {} client -p {} -a {} -b {} -i {}".format(
+                NAME, LD_LIBRARY_PATH, MODULE_NAME, self.args.port, self.args.addr, CUDA_BIN,
                 CUDA_INCLUDE)
 
         if self.args.verbose:
