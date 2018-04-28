@@ -205,6 +205,7 @@ class ServerRuntimeCTypes(object):
         self.main_dataset = None
         self.global_state = None
         self.global_params = None
+        self.top_level_aggregate = None
         self.client_datasets = {}
 
     def prepare_datastructures(self, global_params_enc):
@@ -215,6 +216,23 @@ class ServerRuntimeCTypes(object):
         self.global_params = self.py_mod.GlobalParams()
         self.global_params.decode(global_params_enc, None)
         self.global_state = self.py_mod.init_global_state(self.global_params)
+        self.top_level_aggregate = self.py_mod.init_aggregation_result(
+            self.global_params)
+
+    def reset_aggregation_result(self):
+        """reset the current top level aggregation result"""
+        self.top_level_aggregate = self.py_mod.init_aggregation_result(
+            self.global_params, aggregation_result=self.top_level_aggregate)
+
+    def aggregate(self, partial_result_enc):
+        """
+        aggregate a partial result into the top level aggregate
+        :partial_result_enc: encoded aggregation result
+        """
+        partial_result = self.py_mod.AggregationResult()
+        partial_result.decode(partial_result_enc, self.global_params)
+        self.py_mod.aggregate(
+            self.global_params, self.top_level_aggregate, partial_result)
 
     def update_global_state(self, aggregation_result):
         """

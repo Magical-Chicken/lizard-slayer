@@ -2,24 +2,36 @@ from ctypes import c_int, POINTER
 from lizard import user_prog_resources
 
 
-def aggregate(global_params, partial_aggregates, result=None):
+def aggregate(global_params, running_aggregate, aggregation_result):
     """
-    aggregate many aggregation results into single aggregation result
+    add an aggregation result into a running total aggregate
     aggregation must be associative
     :global_params: global parameters object
-    :partial_aggregates: list of AggregationResult objects
-    :result: if supplied, result object to store data in
-    :returns: result param or new AggregationResult object
+    :running_aggregate: running top level AggregationResult
+    :aggregation_result: new aggregation result to add
+    :returns: running aggregate
     """
-    if result is None:
-        result = AggregationResult()
-        result.init_aux_structures(global_params)
-    values_ref = result.get_ref('values')
-    for partial_agg in partial_aggregates:
-        partial_agg_values = partial_agg.get_ref('values')
-        for i in range(global_params.dims):
-            values_ref[i] = partial_agg_values[i]
-    return result
+    running_ref = running_aggregate.get_ref('values')
+    agg_ref = aggregation_result.get_ref('values')
+    for i in range(global_params.dims):
+        running_ref[i] += agg_ref[i]
+    return running_aggregate
+
+
+def init_aggregation_result(global_params, aggregation_result=None):
+    """
+    init or reset aggregation result
+    :global_params: global parameters object
+    :aggregation_result: if supplied, aggregation result object
+    :returns: aggregation_result param or new AggregationResult object
+    """
+    if aggregation_result is None:
+        aggregation_result = AggregationResult()
+        aggregation_result.init_aux_structures(global_params)
+    values_ref = aggregation_result.get_ref('values')
+    for i in range(global_params.dims):
+        values_ref[i] = 0
+    return aggregation_result
 
 
 def init_global_state(global_params, global_state=None):
