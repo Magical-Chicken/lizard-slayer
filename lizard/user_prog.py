@@ -336,7 +336,7 @@ class UserProgRuntimeCTypes(object):
             self.blocks, self.block_size, ctypes.byref(self.global_params),
             ctypes.byref(self.dataset), ctypes.byref(self.global_state),
             ctypes.byref(self.agg_res))
-        return self.agg_res.encode()
+        return self.agg_res.encode(self.global_params)
 
     def prepare_datastructures(self, global_params_enc):
         """
