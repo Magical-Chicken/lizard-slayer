@@ -208,6 +208,25 @@ class ServerRuntimeCTypes(object):
         self.top_level_aggregate = None
         self.client_datasets = {}
 
+    @property
+    def global_state_encoded(self):
+        """
+        encoded global state
+        :return: encoded str
+        """
+        return self.global_state.encode(self.global_params)
+
+    @property
+    def dataset_partitions_encoded(self):
+        """
+        encode dataset partitions
+        :returns: map of encoded partitions
+        """
+        return {
+            c: d.encode(self.global_params)
+            for c, d in self.client_datasets.items()
+        }
+
     def prepare_datastructures(self, global_params_enc):
         """
         prepare user program data structures
@@ -245,16 +264,6 @@ class ServerRuntimeCTypes(object):
             self.global_params, aggregation_result, self.global_state)
         if self.global_state.done:
             self.done = True
-
-    def encode_dataset_partitions(self):
-        """
-        encode dataset partitions
-        :returns: map of encoded partitions
-        """
-        return {
-            c: d.encode(self.global_params)
-            for c, d in self.client_datasets.items()
-        }
 
     def partition_data(self, dataset_enc):
         """

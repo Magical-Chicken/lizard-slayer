@@ -44,9 +44,8 @@ def handle_event_run_program(event):
     runtime = program.get_new_server_runtime(runtime_id, all_hardware)
     runtime.prepare_datastructures(global_params_enc)
     runtime.partition_data(dataset_enc)
-    client_datasets_enc = runtime.encode_dataset_partitions()
     runtime_init_remote_event_ids = []
-    for client_uuid, dataset_enc in client_datasets_enc.items():
+    for client_uuid, dataset_enc in runtime.dataset_partitions_encoded.items():
         data = {
             'runtime_id': runtime_id,
             'checksum': prog_checksum,
@@ -76,7 +75,7 @@ def handle_event_run_program(event):
         post_data = {
             'runtime_id': runtime_id,
             'checksum': prog_checksum,
-            'global_state_enc': runtime.global_state.enc(),
+            'global_state_enc': runtime.global_state_encoded,
         }
         with server.state_access() as s:
             s.post_all(
