@@ -11,7 +11,7 @@ class ServerEventType(enum.Enum):
     INVALID_TYPE = 'invalid_type'
     REQ_SHUTDOWN = 'req_shutdown'
     REGISTER_PROG = 'register_prog'
-    RUN_PROGRAM = 'RUN_PROGRAM'
+    RUN_PROGRAM = 'run_program'
 
 
 def handle_event_run_program(event):

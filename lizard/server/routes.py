@@ -130,6 +130,22 @@ def program_item(prog_hash):
         raise NotImplementedError
 
 
+@APP.route('/runtimes/<prog_hash>', methods=['POST'])
+def runtimes_new(prog_hash):
+    """
+    POST /runtimes/<prog_hash>: create new program runtime, and run program
+    :prog_hash: program checksum/identifier
+    :returns: flask response
+    """
+    data = request.get_json()
+    event_data = {
+        'checksum': prog_hash,
+        'dataset_enc': data['dataset_enc'],
+        'global_params_enc': data['global_params_enc'],
+    }
+    return respond_create_event('run_program', event_data)
+
+
 @APP.route('/events/<event_id>', methods=['GET'])
 def event_item(event_id):
     """
