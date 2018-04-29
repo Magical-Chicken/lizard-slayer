@@ -4,6 +4,8 @@ info:
     data_flow_model: groupby_aggergate
     iterative: true
     kernel_type: cuda
+    # if specified, file with funcs for load_and_run script
+    loader: loader.py
     # if true, build c extention, if false, use ctypes
     # default is true
     py_c_extention: false
