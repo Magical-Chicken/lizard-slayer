@@ -335,8 +335,8 @@ class UserProgRuntimeCTypes(object):
         self.prog.run_iteration(
             self.blocks, self.block_size, ctypes.byref(self.global_params),
             ctypes.byref(self.dataset), ctypes.byref(self.global_state),
-            ctypes.byref(self.aggregation_result))
-        return self.aggregation_result.encode()
+            ctypes.byref(self.agg_res))
+        return self.agg_res.encode()
 
     def prepare_datastructures(self, global_params_enc):
         """
