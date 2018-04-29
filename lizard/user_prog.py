@@ -217,9 +217,17 @@ class ServerRuntimeCTypes(object):
         return self.global_state.encode(self.global_params)
 
     @property
+    def top_level_aggregate_encoded(self):
+        """
+        encoded top level aggregation result
+        :returns: encoded str
+        """
+        return self.top_level_aggregate.encode(self.global_params)
+
+    @property
     def dataset_partitions_encoded(self):
         """
-        encode dataset partitions
+        encoded dataset partitions
         :returns: map of encoded partitions
         """
         return {
