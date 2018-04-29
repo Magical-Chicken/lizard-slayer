@@ -26,8 +26,8 @@ def b64_json_dec(encoded):
 class EncodableStructure(ctypes.Structure):
     """Base class for encodable ctypes structures"""
     _fields_ = []
-    # NOTE: dynamic alloc fields must be non void pointer types
-    dynamic_alloc_fields = []
+    # NOTE: aux dynamic alloc fields must be non void pointer types
+    aux_field_names = []
 
     def __len__(self):
         """
@@ -43,7 +43,7 @@ class EncodableStructure(ctypes.Structure):
         """
         data = {}
         for field, _ in self._fields_:
-            if field in self.dynamic_alloc_fields:
+            if field in self.aux_field_names:
                 continue
             data[field] = getattr(self, field)
         if len(self.aux_field_names) > 0:
@@ -71,7 +71,7 @@ class EncodableStructure(ctypes.Structure):
         :returns: value of field
         :raises: AttributeError:
         """
-        if field in self.dynamic_alloc_fields and not getattr(self, field):
+        if field in self.aux_field_names and not getattr(self, field):
             field = '{}_aux'.format(field)
         return getattr(self, field)
 

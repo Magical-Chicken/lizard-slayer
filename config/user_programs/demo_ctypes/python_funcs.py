@@ -198,7 +198,9 @@ class Dataset(user_prog_resources.EncodableStructure):
         initialize auxilary datastructures
         :global_params: global paramters object
         """
-        self.points_aux = [[0] * global_params.dims] * self.num_points
+        self.points_aux = [
+            [0] * global_params.dims for _ in range(self.num_points)
+        ]
 
     def encode_dynamic(self, global_params):
         """
@@ -222,7 +224,7 @@ class Dataset(user_prog_resources.EncodableStructure):
         :encoded: b64 encoded json
         """
         decoded = user_prog_resources.b64_json_dec(encoded)
-        if self.values:
+        if self.points:
             for i in range(self.num_points):
                 for j in range(global_params.dims):
                     self.points[i][j] = decoded['points'][i][j]

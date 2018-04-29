@@ -1,4 +1,12 @@
-import python_funcs
+import os
+import sys
+
+try:
+    import python_funcs
+except ImportError:
+    current_dir = os.path.dirname(__file__)
+    sys.path.append(os.path.abspath(current_dir))
+    import python_funcs
 
 
 def init_global_params(global_params_conf):
@@ -9,7 +17,7 @@ def init_global_params(global_params_conf):
         - max_iterations
     :returns: GlobalParams object
     """
-    global_params = python_funcs.GlobalParams
+    global_params = python_funcs.GlobalParams()
     global_params.dims = global_params_conf['dims']
     global_params.max_iterations = global_params_conf['max_iterations']
     return global_params
@@ -30,7 +38,7 @@ def init_dataset(global_params, dataset_conf):
     dataset.init_aux_structures(global_params)
     points_ref = dataset.get_ref('points')
     for l_idx in range(dataset.num_points):
-        line_vals = lines[l_idx].split(',')
+        line_vals = [float(v.strip()) for v in lines[l_idx].split(',')]
         for d_idx in range(global_params.dims):
             points_ref[l_idx][d_idx] = line_vals[d_idx]
     return dataset
