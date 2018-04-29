@@ -44,9 +44,7 @@ def handle_event_run_program(event):
     runtime = program.get_new_server_runtime(runtime_id, all_hardware)
     runtime.prepare_datastructures(global_params_enc)
     runtime.partition_data(dataset_enc)
-    client_datasets_enc = {
-        c: d.encode() for c, d in runtime.client_datasets.items()
-    }
+    client_datasets_enc = runtime.encode_dataset_partitions()
     runtime_init_remote_event_ids = []
     for client_uuid, dataset_enc in client_datasets_enc.items():
         data = {

@@ -246,6 +246,16 @@ class ServerRuntimeCTypes(object):
         if self.global_state.done:
             self.done = True
 
+    def encode_dataset_partitions(self):
+        """
+        encode dataset partitions
+        :returns: map of encoded partitions
+        """
+        return {
+            c: d.encode(self.global_params)
+            for c, d in self.client_datasets.items()
+        }
+
     def partition_data(self, dataset_enc):
         """
         load dataset, divides workload, sets up client datasets
