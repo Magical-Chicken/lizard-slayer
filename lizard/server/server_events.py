@@ -76,6 +76,7 @@ def handle_event_run_program(event):
             'runtime_id': runtime_id,
             'checksum': prog_checksum,
             'global_state_enc': runtime.global_state_encoded,
+            'send_remote_event': True,
         }
         with server.state_access() as s:
             s.post_all(
@@ -91,8 +92,8 @@ def handle_event_run_program(event):
 
     LOG.info('Finished running user program: %s', program)
     return {
-        'end_aggregate': runtime.top_level_aggregate,
-        'end_global_state': runtime.global_state,
+        'end_aggregate': runtime.top_level_aggregate_encoded,
+        'end_global_state': runtime.global_state_encoded,
     }
 
 
