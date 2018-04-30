@@ -2,7 +2,7 @@ import contextlib
 import threading
 import queue
 
-from lizard.events import EventStatus
+from lizard.events import FINAL_STATES
 
 REMOTE_EVENTS = None
 REMOTE_EVENTS_LOCK = threading.Lock()
@@ -24,7 +24,6 @@ def remote_events_access():
 
 class RemoteEvents(object):
     """Manages tracking remote events"""
-    final_states = (EventStatus.SUCCESS.value, EventStatus.FAILURE.value)
 
     def __init__(self):
         """RemoteEvents init"""
@@ -110,7 +109,7 @@ class RemoteEvents(object):
         if client_id not in self._remote_event_map:
             raise ValueError("Client does not exist")
         self._remote_event_map[client_id][event_id] = event_props
-        if event_props['status'] in self.final_states:
+        if event_props['status'] in FINAL_STATES:
             self.run_callbacks_for_event(client_id, event_id, event_props)
             self.remove_from_multi_callback_pending(event_id)
             self._complete_event_set.add(event_id)

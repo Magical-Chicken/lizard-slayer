@@ -1,11 +1,7 @@
 #!/usr/bin/python3
 
-# FIXME FIXME FIXME
-# When an api is written to streamline using this platform this can be removed
-# This is brittle, has hardcoded paths, and is not intended for production use
-
 # Usage:
-#   load_and_run.py program/dir/ http://server_address:port_number
+#   load_program.py program/dir/ http://server_address:port_number
 
 import hashlib
 import json
@@ -13,6 +9,13 @@ import os
 import requests
 import sys
 import yaml
+
+try:
+    from lizard import runtime_helper
+except ImportError:
+    parent_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+    sys.path.append(os.path.abspath(parent_dir))
+    from lizard import runtime_helper
 
 CONFIG_FILENAME = 'config.yaml'
 
@@ -36,8 +39,9 @@ def register_program(server_address, config_data):
         'checksum': checksum,
     }
     endpoint = os.path.join(server_address, 'programs')
-    requests.post(endpoint, json=post_data)
-    # TODO: block until program ready, requires blocking api endpoint support
+    req_data = requests.post(endpoint, json=post_data).json()
+    event_id = req_data['event_id']
+    runtime_helper.poll_for_event_complete(server_address, event_id)
     return checksum
 
 

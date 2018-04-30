@@ -11,6 +11,9 @@ class EventStatus(enum.Enum):
     FAILURE = 'failure'
 
 
+FINAL_STATES = (EventStatus.SUCCESS.value, EventStatus.FAILURE.value)
+
+
 class BaseEvent(object):
     """Base event type"""
     event_map = None
