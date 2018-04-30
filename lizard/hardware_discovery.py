@@ -78,10 +78,9 @@ def check_gpus(args, tmpdir):
     :tmpdir: temporary directory
     :returns: dict with GPU info
     """
-    empty_result = {'gpus_present': 0}
     if args.no_gpu:
         LOG.warning("Not scanning available gpus, running programs will fail")
-        return empty_result
+        return {'num_gpus': 0, 'gpu_info': []}
     LOG.info('Checking CUDA build system')
     program = setup_cuda_detect(args, tmpdir)
     res = {

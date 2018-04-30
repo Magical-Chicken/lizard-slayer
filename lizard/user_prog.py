@@ -131,8 +131,10 @@ class UserProg(object):
     @property
     def compute_level(self):
         """CUDA compute level to compile user program for"""
-        major_level = self.hardware.get('comp_level_major', 2)
-        minor_level = self.hardware.get('comp_level_minor', 0)
+        props = (self.hardware['gpu_info'][0]
+                 if self.hardware.get('num_gpus', 0) > 0 else {})
+        major_level = props.get('comp_level_major', 2)
+        minor_level = props.get('comp_level_minor', 0)
         compute_str = 'compute_{}{}'.format(major_level, minor_level)
         return compute_str
 
