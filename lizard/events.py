@@ -1,4 +1,5 @@
 import enum
+import time
 
 from lizard import LOG
 from lizard import util
@@ -32,6 +33,7 @@ class BaseEvent(object):
         self.status = EventStatus.PENDING
         self.result = None
         self.data = data
+        self.completion_time = 0
         self._register_event()
 
     def handle(self):
@@ -42,6 +44,7 @@ class BaseEvent(object):
             raise NotImplementedError("Cannot handle BaseEvent")
         handler = self.event_handler_map.get(
             self.event_type, handler_not_implemented)
+        start_time = time.time()
         try:
             self.status = EventStatus.RUNNING
             self.result = handler(self)
@@ -51,6 +54,8 @@ class BaseEvent(object):
             LOG.warning("Failed to complete event: %s error: %s", self, msg)
             self.status = EventStatus.FAILURE
             self.result = {'error': msg}
+        end_time = time.time()
+        self.completion_time = end_time - start_time
 
     def _register_event(self):
         """
@@ -71,6 +76,7 @@ class BaseEvent(object):
             'type': self.event_type.value,
             'status': self.status.value,
             'result': self.result,
+            'completion_time': self.completion_time,
         }
 
     @property

@@ -45,4 +45,5 @@ def run_using_runner_module(
     req_data = requests.post(path, json=event_data).json()
     result_data = poll_for_event_complete(server_address, req_data['event_id'])
     end_global_state = result_data['result']['end_global_state']
+    print("Run completed in {} seconds".format(result_data['completion_time']))
     runner_mod.print_result(global_params, end_global_state)
