@@ -24,6 +24,7 @@ def remote_events_access():
 
 class RemoteEvents(object):
     """Manages tracking remote events"""
+    final_states = (EventStatus.SUCCESS.value, EventStatus.FAILURE.value)
 
     def __init__(self):
         """RemoteEvents init"""
@@ -31,6 +32,7 @@ class RemoteEvents(object):
         self._callback_map = {}
         self._multi_callback_list = []
         self._callback_queue = queue.Queue()
+        self._complete_event_set = set()
         self.start_callback_worker()
 
     def register_client(self, client_id):
@@ -66,6 +68,36 @@ class RemoteEvents(object):
             'funcall': callback_func,
             'event_ids': event_ids
         })
+        for event_id in self._complete_event_set.intersection(set(event_ids)):
+            self.remove_from_multi_callback_pending(event_id)
+
+    def run_callbacks_for_event(self, client_id, event_id, event_props):
+        """
+        run all callback functions registered for event
+        :client_id: client uuid
+        :event_id: event uuid
+        :event_props: event properties
+        """
+        funcs = self._callback_map[client_id].pop(event_id, [])
+        for func in funcs:
+            callback_data = {'funcall': func, 'event_data': event_props}
+            self._callback_queue.put_nowait(callback_data)
+
+    def remove_from_multi_callback_pending(self, event_id):
+        """
+        remove the event from the callback pendings for all multi callbacks
+        :event_id: event uuid
+        :event_props: event properties
+        """
+        for multi_info in self._multi_callback_list:
+            if event_id in multi_info['event_ids']:
+                multi_info['event_ids'].remove(event_id)
+            if len(multi_info['event_ids']) == 0:
+                callback_data = {
+                    'funcall': multi_info['funcall'],
+                    'event_data': {}
+                }
+                self._callback_queue.put_nowait(callback_data)
 
     def store_event(self, client_id, event_id, event_props):
         """
@@ -78,20 +110,10 @@ class RemoteEvents(object):
         if client_id not in self._remote_event_map:
             raise ValueError("Client does not exist")
         self._remote_event_map[client_id][event_id] = event_props
-        final_states = (EventStatus.SUCCESS.value, EventStatus.FAILURE.value)
-        if event_props['status'] in final_states:
-            for func in self._callback_map[client_id].get(event_id, []):
-                callback_data = {'funcall': func, 'event_data': event_props}
-                self._callback_queue.put_nowait(callback_data)
-            for multi_info in self._multi_callback_list:
-                if event_id in multi_info['event_ids']:
-                    multi_info['event_ids'].remove(event_id)
-                if len(multi_info['event_ids']) == 0:
-                    callback_data = {
-                        'funcall': multi_info['funcall'],
-                        'event_data': {}
-                    }
-                    self._callback_queue.put_nowait(callback_data)
+        if event_props['status'] in self.final_states:
+            self.run_callbacks_for_event(client_id, event_id, event_props)
+            self.remove_from_multi_callback_pending(event_id)
+            self._complete_event_set.add(event_id)
 
     def start_callback_worker(self):
         """Worker for handling remote event triggered callbacks"""
