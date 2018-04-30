@@ -10,7 +10,7 @@ void run_iteration(int blocks, int block_size, global_params_t *params,
     for (i = 0; i < params->dims; i++) result->values[i] = 0;
     for (i = 0; i < data->num_points; i++)
         for (j = 0; j < params->dims; j++)
-            result->values[j] += data->points[i][j] * state->iteration;
+            result->values[j] += data->points[i][j];
 }
 
 void setup_dataset(dataset_t *data, global_params_t *params) {
