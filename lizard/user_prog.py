@@ -19,12 +19,13 @@ PROGRAM_SOURCE_FILE_NAMES = {
 class UserProg(object):
     """A user program"""
 
-    def __init__(self, name, checksum, data_file, build_dir=None):
+    def __init__(self, name, checksum, data_file, hardware, build_dir=None):
         """
         UserProg init
         :name: human readable program name
         :checksum: checksum of data file, and id key
         :data_file: path to json program definition blob
+        :hardware: hardware info dict
         :build_dir: if provided, directory to build code in
         :ignore_data_file: if true, ignore json data file
         """
@@ -33,6 +34,7 @@ class UserProg(object):
         self.ready = False
         self.name = name
         self.checksum = checksum
+        self.hardware = hardware
         self.build_dir = build_dir
         self.data_file = data_file
         with open(self.data_file, 'r') as fp:
@@ -52,11 +54,10 @@ class UserProg(object):
         py_spec.loader.exec_module(py_mod)
         return py_mod
 
-    def get_new_program_runtime(self, runtime_id, hardware):
+    def get_new_program_runtime(self, runtime_id):
         """
         Get a new program runtime instance
         :runtime_id: program runtime uuid
-        :hardware: hardware info dict
         :returns: runtime instance
         """
         if not self.ready:
@@ -68,15 +69,14 @@ class UserProg(object):
             prog = ctypes.cdll.LoadLibrary(path)
             py_mod = self.get_program_py_mod()
             runtime = UserProgRuntimeCTypes(
-                runtime_id, hardware, self.data['info'], prog, py_mod)
+                runtime_id, self.hardware, self.data['info'], prog, py_mod)
         self.program_runtimes[runtime_id] = runtime
         return runtime
 
-    def get_new_server_runtime(self, runtime_id, hardware):
+    def get_new_server_runtime(self, runtime_id):
         """
         Get a new server program runtime instance
         :runtime_id: program runtime uuid
-        :hardware: all clients hardware info dict
         :returns: runtime instance
         """
         if not self.ready:
@@ -86,7 +86,7 @@ class UserProg(object):
         else:
             py_mod = self.get_program_py_mod()
             runtime = ServerRuntimeCTypes(
-                runtime_id, hardware, self.data['info'], py_mod)
+                runtime_id, self.hardware, self.data['info'], py_mod)
         self.server_runtimes[runtime_id] = runtime
         return runtime
 

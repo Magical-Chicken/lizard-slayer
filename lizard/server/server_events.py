@@ -38,10 +38,9 @@ def handle_event_run_program(event):
 
     with server.state_access() as s:
         program = s.registered_progs[prog_checksum]
-        all_hardware = s.all_clients_hardware
     if not program.ready:
         raise ValueError('cannot run program, not ready')
-    runtime = program.get_new_server_runtime(runtime_id, all_hardware)
+    runtime = program.get_new_server_runtime(runtime_id)
     runtime.prepare_datastructures(global_params_enc)
     runtime.partition_data(dataset_enc)
     runtime_init_remote_event_ids = []
@@ -120,12 +119,14 @@ def handle_event_register_prog(event):
 
     with server.state_access() as s:
         user_progs_dir = s.user_progs_dir
+        all_hardware = s.all_clients_hardware
     prog_dir = os.path.join(user_progs_dir, checksum)
     data_file = os.path.join(prog_dir, 'data.json')
     os.mkdir(prog_dir)
     with open(data_file, 'w') as fp:
         fp.write(data)
-    program = user_prog.UserProg(name, checksum, data_file, build_dir=prog_dir)
+    program = user_prog.UserProg(
+        name, checksum, data_file, all_hardware, build_dir=prog_dir)
     program.build_for_server()
     post_data = event.data.copy()
     post_data['send_remote_event'] = True

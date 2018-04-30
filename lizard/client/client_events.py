@@ -46,8 +46,7 @@ def handle_event_init_runtime(event):
     global_params_enc = event.data['global_params_enc']
     with client.client_access() as c:
         program = c.user_programs[prog_checksum]
-        hardware = c.hardware
-    runtime = program.get_new_program_runtime(runtime_id, hardware)
+    runtime = program.get_new_program_runtime(runtime_id)
     runtime.prepare_datastructures(global_params_enc)
     runtime.load_data(dataset_enc)
     LOG.info('Loaded client program instance')
@@ -67,12 +66,14 @@ def handle_event_register_prog(event):
     checksum = event.data['checksum']
     with client.client_access() as c:
         user_progs_dir = c.user_progs_dir
+        hardware = c.hardware
     prog_dir = os.path.join(user_progs_dir, checksum)
     data_file = os.path.join(prog_dir, 'data.json')
     os.mkdir(prog_dir)
     with open(data_file, 'w') as fp:
         fp.write(data)
-    program = user_prog.UserProg(name, checksum, data_file, build_dir=prog_dir)
+    program = user_prog.UserProg(
+        name, checksum, data_file, hardware, build_dir=prog_dir)
     program.verify_checksum()
     with client.client_access() as c:
         cuda_bin = c.args.bin
