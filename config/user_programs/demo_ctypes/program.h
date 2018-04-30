@@ -2,16 +2,17 @@
 #define _EMPTY_PROG
 
 typedef struct gobal_state {
-    int done, iteration, *values;
+    int done, iteration;
+    float *values;
 } global_state_t;
 
 typedef struct aggregation_result {
-    int *values;
+    float *values;
 } agg_res_t;
 
 typedef struct dataset {
     int num_points;
-    int **points;
+    float **points;
 } dataset_t;
 
 typedef struct global_params {

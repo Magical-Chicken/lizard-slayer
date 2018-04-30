@@ -15,18 +15,18 @@ void run_iteration(int blocks, int block_size, global_params_t *params,
 
 void setup_dataset(dataset_t *data, global_params_t *params) {
     int i;
-    cudaMallocManaged(&data->points, data->num_points * sizeof(int*));
+    cudaMallocManaged(&data->points, data->num_points * sizeof(float*));
     for (i = 0; i < data->num_points; i++)
-        cudaMallocManaged(&data->points[i], params->dims * sizeof(int));
+        cudaMallocManaged(&data->points[i], params->dims * sizeof(float));
 }
 
 void setup_global_state(global_state_t *state, global_params_t *params) {
-    cudaMallocManaged(&state->values, params->dims * sizeof(int));
+    cudaMallocManaged(&state->values, params->dims * sizeof(float));
     state->iteration = 0;
 }
 
 void setup_aggregation_result(agg_res_t *result, global_params_t *params) {
-    cudaMallocManaged(&result->values, params->dims * sizeof(int));
+    cudaMallocManaged(&result->values, params->dims * sizeof(float));
 }
 
 void free_dataset(dataset_t *data, global_params_t *params) {
