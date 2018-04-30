@@ -96,13 +96,13 @@ def get_dataset_slice(
 
 
 class GlobalState(user_prog_resources.EncodableStructure):
+    # NOTE: all GlobalState objects must have a boolean/int 'done' attribute
     _fields_ = [
+        ('done', c_int),
         ('iteration', c_int),
         ('values', POINTER(c_int)),
     ]
     aux_field_names = ('values',)
-    # NOTE: all GlobalState objects must have a boolean 'done' attribute
-    done = False
 
     def init_aux_structures(self, global_params):
         """

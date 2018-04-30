@@ -2,7 +2,7 @@
 #define _EMPTY_PROG
 
 typedef struct gobal_state {
-    int iteration, *values;
+    int done, iteration, *values;
 } global_state_t;
 
 typedef struct aggregation_result {
