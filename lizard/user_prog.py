@@ -170,6 +170,8 @@ class UserProg(object):
             flag_value = '-arch={}'.format(self.compute_level)
             make_cmd.append('COMPUTE_LEVEL_FLAG={}'.format(flag_value))
             LOG.debug('Using compute level: %s', flag_value)
+        else:
+            LOG.warning('Using default compute level, not optimized')
         LOG.debug('Building CUDA shared object')
         util.subp(make_cmd)
         if self.use_c_extention:

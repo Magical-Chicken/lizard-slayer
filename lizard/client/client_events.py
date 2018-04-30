@@ -78,7 +78,9 @@ def handle_event_register_prog(event):
     with client.client_access() as c:
         cuda_bin = c.args.bin
         include_path = c.args.include
-    program.build(cuda_bin=cuda_bin, include_path=include_path)
+    # NOTE: setting compute levels higher than default does not currently work
+    program.build(
+        cuda_bin=cuda_bin, include_path=include_path, set_compute_level=False)
     with client.client_access() as c:
         c.user_programs[checksum] = program
     LOG.info('Registered program: %s', program)
