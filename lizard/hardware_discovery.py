@@ -60,8 +60,10 @@ def setup_cuda_detect(args, tmpdir):
     conf_raw = load_resource_to_prog_dir(conf_fname)
     checksum = util.checksum(conf_raw)
     program = user_prog.UserProg(
-        'Hardware Discovery', checksum, data_file, build_dir=prog_dir)
-    program.build(cuda_bin=args.bin, include_path=args.include, unpack=False)
+        'Hardware Discovery', checksum, data_file, {}, build_dir=prog_dir)
+    program.build(
+        cuda_bin=args.bin, include_path=args.include, unpack=False,
+        set_compute_level=False)
     so_path = os.path.join(prog_dir, 'user_program_cuda.so')
     wrapper = ctypes.cdll.LoadLibrary(so_path)
     wrapper.get_num_gpus.restype = ctypes.c_int

@@ -128,12 +128,23 @@ class UserProg(object):
         self.unpack(['python'])
         self.ready = True
 
-    def build(self, cuda_bin=None, include_path=None, unpack=True):
+    @property
+    def compute_level(self):
+        """CUDA compute level to compile user program for"""
+        major_level = self.hardware.get('comp_level_major', 2)
+        minor_level = self.hardware.get('comp_level_minor', 0)
+        compute_str = 'compute_{}{}'.format(major_level, minor_level)
+        return compute_str
+
+    def build(
+            self, cuda_bin=None, include_path=None, unpack=True,
+            set_compute_level=True):
         """
         set up user program resources and build shared obj
         :cuda_bin: path to cuda tools bin
         :include_path: path to cuda include dir
         :unpack: if true, unpack program json
+        :set_compute_level: if true, specify appropriate compute level
         """
         if not self.build_dir or not os.path.isdir(self.build_dir):
             raise ValueError("Build dir not set up")
@@ -152,6 +163,10 @@ class UserProg(object):
             make_cmd.append('NVCC={}'.format(nvcc_path))
         if include_path is not None:
             make_cmd.append('CUDA_L64=-L{}'.format(include_path))
+        if set_compute_level:
+            flag_value = '-arch={}'.format(self.compute_level)
+            make_cmd.append('COMPUTE_LEVEL_FLAG={}'.format(flag_value))
+            LOG.debug('Using compute level: %s', flag_value)
         LOG.debug('Building CUDA shared object')
         util.subp(make_cmd)
         if self.use_c_extention:
