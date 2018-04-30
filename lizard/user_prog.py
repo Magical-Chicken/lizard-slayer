@@ -329,6 +329,10 @@ class UserProgRuntimeCTypes(object):
         load dataset
         :dataset_enc: encoded data
         """
+        self.dataset = self.py_mod.Dataset()
+        self.dataset.decode(dataset_enc, self.global_params, decode_aux=False)
+        self.prog.setup_dataset(
+            ctypes.byref(self.dataset), ctypes.byref(self.global_params))
         self.dataset.decode(dataset_enc, self.global_params)
         # FIXME FIXME FIXME
         # calculate number of blocks and block size for processing dataset
@@ -353,11 +357,8 @@ class UserProgRuntimeCTypes(object):
         """
         self.global_params = self.py_mod.GlobalParams()
         self.global_params.decode(global_params_enc, None)
-        self.dataset = self.py_mod.Dataset()
         self.agg_res = self.py_mod.AggregationResult()
         self.global_state = self.py_mod.GlobalState()
-        self.prog.setup_dataset(
-            ctypes.byref(self.dataset), ctypes.byref(self.global_params))
         self.prog.setup_aggregation_result(
             ctypes.byref(self.agg_res), ctypes.byref(self.global_params))
         self.prog.setup_global_state(

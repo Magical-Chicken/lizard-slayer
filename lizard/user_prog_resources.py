@@ -50,18 +50,19 @@ class EncodableStructure(ctypes.Structure):
             data['dynamic'] = self.encode_dynamic(global_params)
         return b64_json_enc(data)
 
-    def decode(self, encoded, global_params):
+    def decode(self, encoded, global_params, decode_aux=True):
         """
         decode from b64 encoded json string
         :global_params: global parameters object
         :encoded: b64 encoded json
+        :decode_aux: if true decode aux fields
         """
         data = b64_json_dec(encoded)
         for field, _ in self._fields_:
             if field in self.aux_field_names:
                 continue
             setattr(self, field, data[field])
-        if len(self.aux_field_names) > 0:
+        if decode_aux and len(self.aux_field_names) > 0:
             self.decode_dynamic(data['dynamic'], global_params)
 
     def get_ref(self, field):
