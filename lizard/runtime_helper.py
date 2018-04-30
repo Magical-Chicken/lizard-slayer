@@ -1,3 +1,4 @@
+import importlib
 import os
 import requests
 import time
@@ -22,3 +23,26 @@ def poll_for_event_complete(
             break
         time.sleep(poll_freq)
     return data
+
+
+def run_using_runner_module(
+        runner_module_name, run_settings, server_address, checksum):
+    """
+    run a program using a runner module, see demo program for example
+    :runner_module_name: runner module import name
+    :run_settings: dict of run settings needed by runner
+    :server_address: full uri for server
+    :checksum: program checksum/identifier
+    """
+    runner_mod = importlib.import_module(runner_module_name)
+    global_params = runner_mod.init_global_params(run_settings)
+    dataset = runner_mod.init_dataset(global_params, run_settings)
+    event_data = {
+        'global_params_enc': global_params.encode(None),
+        'dataset_enc': dataset.encode(global_params),
+    }
+    path = os.path.join(server_address, 'runtimes', checksum)
+    req_data = requests.post(path, json=event_data).json()
+    result_data = poll_for_event_complete(server_address, req_data['event_id'])
+    end_global_state = result_data['result']['end_global_state']
+    runner_mod.print_result(global_params, end_global_state)
