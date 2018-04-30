@@ -84,8 +84,8 @@ def handle_event_run_program(event):
                 multi_callback_func=multi_callback_wakeup)
         wakeup_ev.wait(timeout=600)
         wakeup_ev.clear()
-        runtime.reset_aggregation_result()
         runtime.update_global_state()
+        runtime.reset_aggregation_result()
         LOG.debug('Completed iteration for user program: %s', program)
         if runtime.done:
             break
