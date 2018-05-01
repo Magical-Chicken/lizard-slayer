@@ -105,7 +105,7 @@ def check_gpus(args, tmpdir):
     for gpu_index in range(res['num_gpus']):
         props = GPUProps()
         program.get_gpu_data(gpu_index, ctypes.byref(props))
-        gpu_props = {
+        gpu_info = {
             'gpu_index': props.gpu_index,
             'comp_level_major': props.comp_level_major,
             'comp_level_minor': props.comp_level_minor,
@@ -117,8 +117,8 @@ def check_gpus(args, tmpdir):
             'max_total_blocks': props.max_total_blocks,
             'name': props.name.decode(),
         }
-        gpu_props['reasonable_block_size'] = get_reasonable_block_size(props)
-        res['gpu_info'].append(gpu_props)
+        gpu_info['reasonable_block_size'] = get_reasonable_block_size(gpu_info)
+        res['gpu_info'].append(gpu_info)
     return res
 
 
