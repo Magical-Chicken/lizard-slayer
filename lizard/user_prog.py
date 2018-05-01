@@ -340,8 +340,8 @@ class UserProgRuntimeCTypes(object):
         self.agg_res = None
         self.global_state = None
         self.global_params = None
-        self.blocks = 0
-        self.block_size = 0
+        gpu_info = hardware['GPU']['gpu_info'][0]
+        self.block_size = gpu_info['reasonable_block_size']
         self._configure_functions()
 
     def load_data(self, dataset_enc):
@@ -354,8 +354,6 @@ class UserProgRuntimeCTypes(object):
         self.prog.setup_dataset(
             ctypes.byref(self.dataset), ctypes.byref(self.global_params))
         self.dataset.decode(dataset_enc, self.global_params)
-        # FIXME FIXME FIXME
-        # calculate number of blocks and block size for processing dataset
 
     def run_iteration(self, global_state_enc):
         """
@@ -365,7 +363,7 @@ class UserProgRuntimeCTypes(object):
         """
         self.global_state.decode(global_state_enc, self.global_params)
         self.prog.run_iteration(
-            self.blocks, self.block_size, ctypes.byref(self.global_params),
+            self.block_size, ctypes.byref(self.global_params),
             ctypes.byref(self.dataset), ctypes.byref(self.global_state),
             ctypes.byref(self.agg_res))
         return self.agg_res.encode(self.global_params)
@@ -420,7 +418,7 @@ class UserProgRuntimeCTypes(object):
             ctypes.POINTER(self.py_mod.GlobalParams),
         ]
         self.prog.run_iteration.argtypes = [
-            ctypes.c_int, ctypes.c_int,
+            ctypes.c_int,
             ctypes.POINTER(self.py_mod.GlobalParams),
             ctypes.POINTER(self.py_mod.Dataset),
             ctypes.POINTER(self.py_mod.GlobalState),

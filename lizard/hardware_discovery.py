@@ -71,6 +71,21 @@ def setup_cuda_detect(args, tmpdir):
     return wrapper
 
 
+def get_reasonable_block_size(props, size_mult=32):
+    """
+    get reasonable cuda block size
+    :props: gpu properties dict
+    :size_mult: block size multiple
+    :returns: reasonable block size
+    """
+    max_reasonable_size = props['max_block_size']
+    min_reasonable_size = props['max_sm_threads'] / props['max_sm_blocks']
+    avg_reasonable_size = (max_reasonable_size + min_reasonable_size) / 2
+    reasonable_block_size = int(avg_reasonable_size/size_mult) * size_mult
+    LOG.debug('Using CUDA block size: %s', reasonable_block_size)
+    return reasonable_block_size
+
+
 def check_gpus(args, tmpdir):
     """
     check for CUDA capable GPUs
@@ -90,7 +105,7 @@ def check_gpus(args, tmpdir):
     for gpu_index in range(res['num_gpus']):
         props = GPUProps()
         program.get_gpu_data(gpu_index, ctypes.byref(props))
-        res['gpu_info'].append({
+        gpu_props = {
             'gpu_index': props.gpu_index,
             'comp_level_major': props.comp_level_major,
             'comp_level_minor': props.comp_level_minor,
@@ -101,7 +116,9 @@ def check_gpus(args, tmpdir):
             'max_total_threads': props.max_total_threads,
             'max_total_blocks': props.max_total_blocks,
             'name': props.name.decode(),
-        })
+        }
+        gpu_props['reasonable_block_size'] = get_reasonable_block_size(props)
+        res['gpu_info'].append(gpu_props)
     return res
 
 
