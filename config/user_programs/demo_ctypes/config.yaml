@@ -1,13 +1,8 @@
 info:
     name: Demo CTypes
     version: 0.1
-    data_flow_model: groupby_aggergate
-    iterative: true
-    kernel_type: cuda
-    # if specified, file with funcs for load_and_run script
-    loader: loader.py
-    # if true, build c extention, if false, use ctypes
-    # default is true
+    # if true, build c extention, if false, use ctypes, default is true
+    # NOTE: ctypes is currently only supported user program type
     py_c_extention: false
 sources:
     python: python_funcs.py
