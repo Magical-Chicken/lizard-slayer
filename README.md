@@ -115,7 +115,7 @@ interfering with the arguments.
 For example: `python3 tools/load_program.py config/user_programs/demo_ctypes
 'http://localhost:5000'`
 
-### Using the runner podule
+### Using the runner module
 To easily run a user program, use the runner module system. Though programs can
 be run manually, it is much simpler to use the `run_using_runner_module`
 function of the `lizard.runtime_helper` module. To use it, start an interactive
@@ -127,9 +127,10 @@ For example:
 ```python
 from lizard import runtime_helper
 runtime_helper.run_using_runner_module(
-    'config.user_programs.demo_ctypes.runner',
-    {'dims': 3, 'max_iterations': 10}, 'http://localhost:5000',
-    'f68445ab756aacaa915c4ff4a2db029c8af4556b')
+    'config.user_programs.demo_ctypes.runner', {
+        'dims': 3, 'max_iterations': 10,
+        'input_file': 'config/user/programs/demo_ctypes/datasets/small-n16-d3'
+    }, 'http://localhost:5000', 'f68445ab756aacaa915c4ff4a2db029c8af4556b')
 ```
 
 The call to `run_using_runner_module` will block until the program has
