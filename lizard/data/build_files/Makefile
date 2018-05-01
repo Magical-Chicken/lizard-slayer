@@ -15,7 +15,7 @@ all: $(TARGET_SO)
 
 $(TARGET_SO): $(NVOBJ)
 	$(NVCC) $(NVFLAGS) $(COMPUTE_LEVEL_FLAG) -dlink -o link.o $^
-	$(CXX) -shared -o $@ $^ link.o $(CUDA_L64) -l cudart
+	$(CXX) -shared -o $@ $^ link.o $(CUDA_L64) -l cudart -l cudadevrt
 
 %.o: %.cu $(HEADERS)
 	$(NVCC) $(NVFLAGS) $(COMPUTE_LEVEL_FLAG) -dc -o $@ $<
