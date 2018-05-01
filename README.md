@@ -87,3 +87,51 @@ directory the CUDA compiler is in and the path to the CUDA lib64.
 
 For example `tox -e run -- client -v -a localhost -p 5000 -b /opt/cuda-8.0/bin
 -i opt/cuda-8.0/lib64`
+
+## Registering and running user programs
+To run a user program, it must first be registered with the server. This can be
+accomplished using the `load_program.py` script available in the `tools`
+directory. Registering a program consists of sending all program data to the
+server, which will then distribute it to the clients, where it will be compiled
+and prepared for running. Programs are identified by a checksum of the json
+data file that contains the program configuration and source files. This
+checksum will be output by the `load_program.py` script after registration is
+complete.
+
+Once a program is registered, it can be run by creating a new runtime event,
+with the program to run specified by the checksum/program identifier that the
+`load_program.py` script output after registering by hitting the
+`runtime/<prog_hash>` api endpoint on the server.
+
+
+### Using the program loader
+With a program laid out in a similar manner to the demo_ctypes program, the
+`load_program.py` script can be run, with arguments specifying the path to the
+program source directory and the uri of the server. The program configuration
+file must be named `config.yaml` in the program source directory. When
+specifying the uri of the server, be sure to quote it to avoid the shell
+interfering with the arguments.
+
+For example: `python3 tools/load_program.py config/user_programs/demo_ctypes
+'http://localhost:5000'`
+
+### Using the runner podule
+To easily run a user program, use the runner module system. Though programs can
+be run manually, it is much simpler to use the `run_using_runner_module`
+function of the `lizard.runtime_helper` module. To use it, start an interactive
+python shell, import the `runtime_helper` module and call the
+`run_using_runner_module` with the runtime settings specified, and the program
+checksum/identifier as returned by the `load_program.py` script.
+
+For example:
+```python
+from lizard import runtime_helper
+runtime_helper.run_using_runner_module(
+    'config.user_programs.demo_ctypes.runner',
+    {'dims': 3, 'max_iterations': 10}, 'http://localhost:5000',
+    'f68445ab756aacaa915c4ff4a2db029c8af4556b')
+```
+
+The call to `run_using_runner_module` will block until the program has
+finished, then output the time taken to run the program and the output of the
+program, as printed by the user supplied runner module.
