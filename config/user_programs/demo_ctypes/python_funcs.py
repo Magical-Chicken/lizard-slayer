@@ -209,10 +209,10 @@ class Dataset(user_prog_resources.EncodableStructure):
         :returns: b64 encoded json
         """
         if self.points:
-            points = [[]] * self.num_points
+            points = [[0] * global_params.dims for _ in range(self.num_points)]
             for i in range(self.num_points):
                 for j in range(global_params.dims):
-                    points[i].append(self.points[i][j])
+                    points[i][j] = self.points[i][j]
         else:
             points = self.points_aux
         return user_prog_resources.b64_json_enc({'points': points})
