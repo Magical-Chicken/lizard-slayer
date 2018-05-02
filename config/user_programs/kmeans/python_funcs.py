@@ -170,7 +170,7 @@ class GlobalState(user_prog_resources.EncodableStructure):
         :global_params: global parameters object
         :encoded: b64 encoded json
         """
-        decoded = user_prog_resources.b64_json_enc(encoded)
+        decoded = user_prog_resources.b64_json_dec(encoded)
         if self.centroids:
             for i in range(global_params.num_centroids):
                 for j in range(global_params.dims):
@@ -211,11 +211,13 @@ class AggregationResult(user_prog_resources.EncodableStructure):
             for i in range(global_params.num_centroids):
                 for j in range(global_params.dims):
                     centroid_updates[i][j] = self.centroid_updates[i][j]
+        else:
+            centroid_updates = self.centroid_updates_aux
+        if self.update_counts:
             update_counts = [0] * global_params.num_centroids
             for i in range(global_params.num_centroids):
                 update_counts[i] = self.update_counts[i]
         else:
-            centroid_updates = self.centroid_updates_aux
             update_counts = self.update_counts_aux
         return user_prog_resources.b64_json_enc({
             'centroid_updates': centroid_updates,
@@ -228,7 +230,19 @@ class AggregationResult(user_prog_resources.EncodableStructure):
         :global_params: global parameters object
         :encoded: b64 encoded json
         """
-        raise NotImplementedError
+        decoded = user_prog_resources.b64_json_dec(encoded)
+        if self.centroid_updates:
+            centroid_updates = decoded['centroid_updates']
+            for i in range(global_params.num_centroids):
+                for j in range(global_params.dims):
+                    self.centroid_updates[i][j] = centroid_updates[i][j]
+        else:
+            self.centroid_updates_aux = decoded['centroid_updates']
+        if self.update_counts:
+            for i in range(global_params.num_centroids):
+                self.update_counts[i] = decoded['update_counts'][i]
+        else:
+            self.update_counts_aux = decoded['update_counts']
 
 
 class Dataset(user_prog_resources.EncodableStructure):
