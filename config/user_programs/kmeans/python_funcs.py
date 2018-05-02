@@ -1,3 +1,5 @@
+import math
+
 from ctypes import c_float, c_int, POINTER
 from lizard import user_prog_resources
 
@@ -11,7 +13,16 @@ def aggregate(global_params, running_aggregate, aggregation_result):
     :aggregation_result: new aggregation result to add
     :returns: running aggregate
     """
-    pass
+    running_centroids_ref = running_aggregate.get_ref('centroid_updates')
+    agg_res_centroids_ref = running_aggregate.get_ref('centroid_updates')
+    for i in range(global_params.num_centroids):
+        for j in range(global_params.dims):
+            running_centroids_ref[i][j] += agg_res_centroids_ref[i][j]
+    running_count_ref = running_aggregate.get_ref('update_counts')
+    agg_res_count_ref = running_aggregate.get_ref('update_counts')
+    for i in range(global_params.num_centroids):
+        running_count_ref[i] += agg_res_count_ref[i]
+    return running_aggregate
 
 
 def init_aggregation_result(global_params, aggregation_result=None):
@@ -21,7 +32,17 @@ def init_aggregation_result(global_params, aggregation_result=None):
     :aggregation_result: if supplied, aggregation result object
     :returns: aggregation_result param or new AggregationResult object
     """
-    pass
+    if aggregation_result is None:
+        aggregation_result = AggregationResult()
+        aggregation_result.init_aux_structures(global_params)
+    centroid_updates_ref = aggregation_result.get('centroid_updates')
+    for i in range(global_params.num_centroids):
+        for j in range(global_params.dims):
+            centroid_updates_ref[i][j] = 0
+    update_counts_ref = aggregation_result.get('update_counts')
+    for i in range(global_params.num_centroids):
+        update_counts_ref[i] = 0
+    return aggregation_result
 
 
 def init_global_state(global_params, global_state=None):
@@ -31,7 +52,16 @@ def init_global_state(global_params, global_state=None):
     :global_state: if supplied, global state object
     :returns: global state param or new GlobalState object
     """
-    pass
+    if global_state is None:
+        global_state = GlobalState()
+        global_state.init_aux_structures(global_params)
+    centroids_ref = global_state.get_ref('centroids')
+    for i in range(global_params.num_centroids):
+        for j in range(global_params.dims):
+            centroids_ref[i][j] = 0
+    global_state.iteration = 0
+    global_state.done = False
+    return global_state
 
 
 def update_global_state(global_params, aggregation_result, global_state):
@@ -42,7 +72,34 @@ def update_global_state(global_params, aggregation_result, global_state):
     :global_state: global state object to update
     :returns: global_state param
     """
-    pass
+
+    def dist(point1, point2):
+        dist_sum = 0
+        for i in range(global_params.dims):
+            dist_sum += (point2 - point1) ** 2
+        return math.sqrt(dist_sum)
+
+    global_state.iteration += 1
+    if global_state.iteration >= global_params.max_iteration:
+        global_state.done = True
+    agg_res_centroids_ref = aggregation_result.get_ref('centroid_updates')
+    agg_res_counts_ref = aggregation_result.get_ref('update_counts')
+    for i in range(global_params.num_centroids):
+        if agg_res_counts_ref[i] == 0:
+            continue
+        for j in range(global_params.dims):
+            agg_res_centroids_ref[i][j] /= agg_res_counts_ref[i]
+    centroids_ref = global_state.get_ref('centroids')
+    if all(dist(agg_res_centroids_ref[i], centroids_ref[i]) <=
+           global_params.threshold for i in
+           range(global_params.num_centroids)):
+        global_state.done = True
+    for i in range(global_params.num_centroids):
+        if agg_res_counts_ref[i] == 0:
+            continue
+        for j in range(global_params.dims):
+            centroids_ref[i][j] = agg_res_centroids_ref[i][j]
+    return global_state
 
 
 def get_dataset_slice(
@@ -57,7 +114,18 @@ def get_dataset_slice(
     :returns: dataset param or new Dataset
     :raises: IndexError: if request out of bounds
     """
-    pass
+    if size <= 0 or start_idx + size > full_dataset.num_points:
+        raise IndexError
+    if dataset is None:
+        dataset = Dataset()
+    dataset.num_points = size
+    dataset.init_aux_structures(global_params)
+    full_points_ref = full_dataset.get_ref('points')
+    dataset_points_ref = dataset.get_ref('points')
+    for i in range(size):
+        for j in range(global_params.dims):
+            dataset_points_ref[i][j] = full_points_ref[start_idx + i][j]
+    return dataset
 
 
 class GlobalState(user_prog_resources.EncodableStructure):
