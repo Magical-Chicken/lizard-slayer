@@ -69,7 +69,7 @@ class UserProg(object):
             # FIXME actually load the modules
             py_mod = self.get_program_py_mod()
             runtime = UserProgRuntimeCExt(
-                runtime_id, hardware, self.data['info'], None, py_mod)
+                runtime_id, self.hardware, self.data['info'], None, py_mod)
         else:
             path = os.path.join(self.build_dir, PROGRAM_SHARED_OBJ_NAME)
             prog = ctypes.cdll.LoadLibrary(path)
@@ -90,7 +90,7 @@ class UserProg(object):
         if self.use_c_extention:
             py_mod = self.get_program_py_mod()
             runtime = ServerRuntimeCExt(
-                runtime_id, hardware, self.data['info'], py_mod)
+                runtime_id, self.hardware, self.data['info'], py_mod)
         else:
             py_mod = self.get_program_py_mod()
             runtime = ServerRuntimeCTypes(
@@ -624,7 +624,9 @@ class UserProgRuntimeCExt(object):
         """
         LOG.info('in load_data')
         LOG.info('first line of data:')
-        LOG.info(dataset_enc[0])
+        # LOG.info(dataset_enc[0])
+        self.data_count = dataset_enc[0]
+        self.dataset = dataset_enc[1]
         # LOG.info('in load_data')
         # FIXME FIXME FIXME
         # calculate number of blocks and block size for processing dataset

@@ -1,6 +1,6 @@
 CXX = g++
 NVCC = nvcc
-NVFLAGS = -arch=sm_60 -Xcompiler '-fPIC'
+NVFLAGS = -Xcompiler '-fPIC'
 
 HEADER = program.h
 NVOBJ = kernel.o
