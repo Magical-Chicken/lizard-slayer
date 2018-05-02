@@ -26,13 +26,17 @@ def poll_for_event_complete(
 
 
 def run_using_runner_module(
-        runner_module_name, run_settings, server_address, checksum):
+        runner_module_name, run_settings, server_address, checksum,
+        print_result_data=True, print_elapsed_time=True):
     """
     run a program using a runner module, see demo program for example
     :runner_module_name: runner module import name
     :run_settings: dict of run settings needed by runner
     :server_address: full uri for server
     :checksum: program checksum/identifier
+    :print_result_data: if true, print out program output
+    :print_elapsed_time: if true, print out run completion time
+    :returns: time taken to run program in seconds
     """
     runner_mod = importlib.import_module(runner_module_name)
     global_params = runner_mod.init_global_params(run_settings)
@@ -45,5 +49,9 @@ def run_using_runner_module(
     req_data = requests.post(path, json=event_data).json()
     result_data = poll_for_event_complete(server_address, req_data['event_id'])
     end_global_state = result_data['result']['end_global_state']
-    print("Run completed in {} seconds".format(result_data['completion_time']))
-    runner_mod.print_result(global_params, end_global_state)
+    completion_time = result_data['completion_time']
+    if print_elapsed_time:
+        print("Run completed in {} seconds".format(completion_time))
+    if print_result_data:
+        runner_mod.print_result(global_params, end_global_state)
+    return completion_time
