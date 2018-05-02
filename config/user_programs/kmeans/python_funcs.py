@@ -35,11 +35,11 @@ def init_aggregation_result(global_params, aggregation_result=None):
     if aggregation_result is None:
         aggregation_result = AggregationResult()
         aggregation_result.init_aux_structures(global_params)
-    centroid_updates_ref = aggregation_result.get('centroid_updates')
+    centroid_updates_ref = aggregation_result.get_ref('centroid_updates')
     for i in range(global_params.num_centroids):
         for j in range(global_params.dims):
             centroid_updates_ref[i][j] = 0
-    update_counts_ref = aggregation_result.get('update_counts')
+    update_counts_ref = aggregation_result.get_ref('update_counts')
     for i in range(global_params.num_centroids):
         update_counts_ref[i] = 0
     return aggregation_result
