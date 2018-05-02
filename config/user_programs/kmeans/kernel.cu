@@ -1,7 +1,83 @@
 #include "program.h"
+#include <math.h>
 
-void run_iteration(int block_size, global_params_t *params,
+__device__ float distance(
+        global_params_t *params, float *point1, float *point2) {
+    int i;
+    float val, accum = 0;
+    for (i = 0; i < params->dims; i++) {
+        // Faster than using pow()
+        val = point2[i] - point1[i];
+        accum += val * val;
+    }
+    return sqrt(accum);
+}
+
+__device__ int nearest_centroid(
+        global_params_t *params, global_state_t *state, float *point) {
+    int i, min_idx;
+    float min_val, cur_val;
+    // iterate through all centroids and determine which is the nearest point
+    for (i = 0, min_val = -1; i < params->num_centroids; i++) {
+        cur_val = distance(params, point, state->centroids[i]);
+        if (cur_val < min_val || min_val == -1) {
+            min_val = cur_val;
+            min_idx = i;
+        }
+    }
+    return min_idx;
+}
+
+__global__ void kernel(
+        global_params_t *params, dataset_t *data, global_state_t *state,
+        agg_res_t *result) {
+    extern __shared__ char shared_start[];
+    int i, idx, centroid_idx, *update_counts;
+    float **updates;
+    // calculate address for updates and update counts
+    update_counts = (int *)shared_start;
+    updates = (float **)(shared_start + params->num_centroids * sizeof(int));
+    // zero out update counters
+    if ((idx = threadIdx.x) < params->num_centroids) {
+        update_counts[idx] = 0;
+        for (i = 0; i < params->dims; i++)
+            updates[idx][i] = 0;
+    }
+    // synchronize threads
+    __syncthreads();
+    // get index of datapoint to operate on
+    idx = blockIdx.x * blockDim.x + threadIdx.x;
+    // if datapoint is past end of data return
+    if (idx >= data->num_points) return;
+    // find nearest centroid
+    centroid_idx = nearest_centroid(params, state, data->points[idx]);
+    // add to update counts and update values atomically in shared memory
+    atomicAdd(&update_counts[centroid_idx], 1);
+    for (i = 0; i < params->dims; i++)
+        atomicAdd(&updates[centroid_idx][i], data->points[idx][i]);
+    // synchronize threads
+    __syncthreads();
+    // add to global updates
+    if ((idx = threadIdx.x) < params->num_centroids) {
+        atomicAdd(&result->update_counts[idx], update_counts[idx]);
+        for (i = 0; i < params->dims; i++)
+            atomicAdd(&result->centroid_updates[idx][i], updates[idx][i]);
+    }
+}
+
+void run_iteration(
+        int block_size, global_params_t *params,
         dataset_t *data, global_state_t *state, agg_res_t *result) {
+    int blocks;
+    size_t shared_size;
+    // calculate number of blocks to run for the dataset
+    blocks = data->num_points / block_size;
+    if (data->num_points % block_size) blocks++;
+    // calculate shared allocation size for update_counts and updates
+    shared_size = params->num_centroids * sizeof(int);
+    shared_size += params->num_centroids * params->dims * sizeof(float);
+    // run kernel
+    kernel<<<blocks, block_size, shared_size>>>(params, data, state, result);
 }
 
 void setup_dataset(dataset_t *data, global_params_t *params) {
