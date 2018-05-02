@@ -80,7 +80,7 @@ def update_global_state(global_params, aggregation_result, global_state):
         return math.sqrt(dist_sum)
 
     global_state.iteration += 1
-    if global_state.iteration >= global_params.max_iteration:
+    if global_state.iteration >= global_params.max_iterations:
         global_state.done = True
     agg_res_centroids_ref = aggregation_result.get_ref('centroid_updates')
     agg_res_counts_ref = aggregation_result.get_ref('update_counts')
