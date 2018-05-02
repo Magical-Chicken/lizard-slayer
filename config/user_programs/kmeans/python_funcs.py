@@ -76,7 +76,7 @@ def update_global_state(global_params, aggregation_result, global_state):
     def dist(point1, point2):
         dist_sum = 0
         for i in range(global_params.dims):
-            dist_sum += (point2 - point1) ** 2
+            dist_sum += (point2[i] - point1[i]) ** 2
         return math.sqrt(dist_sum)
 
     global_state.iteration += 1
