@@ -45,11 +45,12 @@ def register_program(server_address, config_data):
     return checksum
 
 def run_program(server_address, checksum, data_file):
-    endpoint = os.path.join(server_address, 'run', checksum)
+    endpoint = os.path.join(server_address, 'runtimes', checksum)
     with open(data_file, 'r') as fp:
         data = fp.read()
     post_data = {
-        'data': data,
+        'dataset_enc': data,
+        'global_params_enc': 0,
     }
     requests.post(endpoint, json=post_data)
 

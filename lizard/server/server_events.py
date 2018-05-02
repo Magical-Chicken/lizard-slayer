@@ -133,8 +133,6 @@ def handle_event_register_prog(event):
     with server.state_access() as s:
         s.post_all('/programs', post_data, callback_func=callback_func,
                    multi_callback_func=multi_callback_func)
-    program.build(cuda_bin='/opt/cuda-8.0/bin/',
-                  include_path='/opt/cuda-8.0/lib64')
     # NOTE: timeout for registering program on all nodes set to 10 min
     wakeup_ev.wait(timeout=600)
     LOG.info('Registered user program: %s', program)

@@ -6,7 +6,7 @@ info:
     kernel_type: cuda
     py_c_extention: true
 sources:
-    python: kmeans.py
+    python: python_funcs.py
     cpp: kmeans_module.cpp
     header: kmeans.h
     cuda: kmeans.cu
