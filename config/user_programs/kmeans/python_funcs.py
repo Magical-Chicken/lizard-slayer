@@ -15,12 +15,12 @@ def aggregate(global_params, running_aggregate, aggregation_result):
     :returns: running aggregate
     """
     running_centroids_ref = running_aggregate.get_ref('centroid_updates')
-    agg_res_centroids_ref = running_aggregate.get_ref('centroid_updates')
+    agg_res_centroids_ref = aggregation_result.get_ref('centroid_updates')
     for i in range(global_params.num_centroids):
         for j in range(global_params.dims):
             running_centroids_ref[i][j] += agg_res_centroids_ref[i][j]
     running_count_ref = running_aggregate.get_ref('update_counts')
-    agg_res_count_ref = running_aggregate.get_ref('update_counts')
+    agg_res_count_ref = aggregation_result.get_ref('update_counts')
     for i in range(global_params.num_centroids):
         running_count_ref[i] += agg_res_count_ref[i]
     return running_aggregate
@@ -59,7 +59,7 @@ def init_global_state(global_params, global_state=None):
     centroids_ref = global_state.get_ref('centroids')
     for i in range(global_params.num_centroids):
         for j in range(global_params.dims):
-            centroids_ref[i][j] = random.random()
+            centroids_ref[i][j] = random.random() / 15
     global_state.iteration = 0
     global_state.done = False
     return global_state
@@ -78,26 +78,26 @@ def update_global_state(global_params, aggregation_result, global_state):
         dist_sum = 0
         for i in range(global_params.dims):
             dist_sum += (point2[i] - point1[i]) ** 2
-        return math.sqrt(dist_sum)
+        res = math.sqrt(dist_sum)
+        return res
 
     global_state.iteration += 1
     if global_state.iteration >= global_params.max_iterations:
         global_state.done = True
     agg_res_centroids_ref = aggregation_result.get_ref('centroid_updates')
     agg_res_counts_ref = aggregation_result.get_ref('update_counts')
-    for i in range(global_params.num_centroids):
-        if agg_res_counts_ref[i] == 0:
-            continue
+    centroids_ref = global_state.get_ref('centroids')
+    updated_idxs = [
+        i for i in range(global_params.num_centroids) if
+        agg_res_counts_ref[i] != 0
+    ]
+    for i in updated_idxs:
         for j in range(global_params.dims):
             agg_res_centroids_ref[i][j] /= agg_res_counts_ref[i]
-    centroids_ref = global_state.get_ref('centroids')
     if all(dist(agg_res_centroids_ref[i], centroids_ref[i]) <=
-           global_params.threshold for i in
-           range(global_params.num_centroids)):
+            global_params.threshold for i in updated_idxs):
         global_state.done = True
-    for i in range(global_params.num_centroids):
-        if agg_res_counts_ref[i] == 0:
-            continue
+    for i in updated_idxs:
         for j in range(global_params.dims):
             centroids_ref[i][j] = agg_res_centroids_ref[i][j]
     return global_state

@@ -1,4 +1,5 @@
 info:
+    # NOTE: for best results, run with threshold set to 0.0000001
     name: K-Means
     version: 0.1
     py_c_extention: false

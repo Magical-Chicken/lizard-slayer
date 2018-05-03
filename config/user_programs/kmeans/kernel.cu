@@ -40,8 +40,6 @@ __global__ void kernel(
     extern __shared__ char shared_start[];
     int i, idx, centroid_idx, *update_counts;
     float *updates;
-    /*result.centroid_updates[0][0] = params.num_centroids;*/
-    /*result.update_counts[0] = params.dims;*/
     // calculate address for updates and update counts
     update_counts = (int *)shared_start;
     updates = (float *)(shared_start + params.num_centroids * sizeof(int));
