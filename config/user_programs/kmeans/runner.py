@@ -57,4 +57,6 @@ def print_result(global_params, end_global_state):
     """
     global_state = python_funcs.GlobalState()
     global_state.decode(end_global_state, global_params)
+    print("Last iteration: {}".format(global_state.iteration))
+    print("Points:")
     print(global_state.centroids_aux)
