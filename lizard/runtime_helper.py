@@ -27,14 +27,14 @@ def poll_for_event_complete(
 
 def run_using_runner_module(
         runner_module_name, run_settings, server_address, checksum,
-        print_result_data=True, print_elapsed_time=True):
+        quiet_print=False, print_elapsed_time=True):
     """
     run a program using a runner module, see demo program for example
     :runner_module_name: runner module import name
     :run_settings: dict of run settings needed by runner
     :server_address: full uri for server
     :checksum: program checksum/identifier
-    :print_result_data: if true, print out program output
+    :quiet_print: if true, print result, but not in full detail
     :print_elapsed_time: if true, print out run completion time
     :returns: time taken to run program in seconds
     """
@@ -52,6 +52,6 @@ def run_using_runner_module(
     completion_time = result_data['completion_time']
     if print_elapsed_time:
         print("Run completed in {} seconds".format(completion_time))
-    if print_result_data:
-        runner_mod.print_result(global_params, end_global_state)
+    runner_mod.print_result(
+        global_params, end_global_state, quiet_print=quiet_print)
     return completion_time

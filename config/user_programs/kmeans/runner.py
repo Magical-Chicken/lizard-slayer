@@ -49,14 +49,15 @@ def init_dataset(global_params, run_settings):
     return dataset
 
 
-def print_result(global_params, end_global_state):
+def print_result(global_params, end_global_state, quiet_print=False):
     """
     print results from end global state
     :global_params: global parameters object
     :end_global_state: end global state string
+    :quiet_print: if true, print result, but not in full detail
     """
     global_state = python_funcs.GlobalState()
     global_state.decode(end_global_state, global_params)
-    print("Last iteration: {}".format(global_state.iteration))
-    print("Points:")
-    print(global_state.centroids_aux)
+    if not quiet_print:
+        print("Centroids: \n{}".format(global_state.centroids_aux))
+    print("Iterations: {}".format(global_state.iteration))
