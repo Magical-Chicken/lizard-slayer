@@ -1,4 +1,5 @@
 import math
+import random
 
 from ctypes import c_float, c_int, POINTER
 from lizard import user_prog_resources
@@ -58,7 +59,7 @@ def init_global_state(global_params, global_state=None):
     centroids_ref = global_state.get_ref('centroids')
     for i in range(global_params.num_centroids):
         for j in range(global_params.dims):
-            centroids_ref[i][j] = 0
+            centroids_ref[i][j] = random.random()
     global_state.iteration = 0
     global_state.done = False
     return global_state
