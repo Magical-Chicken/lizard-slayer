@@ -13,6 +13,7 @@ except ImportError:
     from lizard import runtime_helper
 
 
+INPUTS_DIR = 'config/user_programs/kmeans/datasets'
 RUNNER_MODULE = 'config.user_programs.kmeans.runner'
 MAX_ITERATIONS = 50
 THRESHOLD = 0.0000001
@@ -43,6 +44,8 @@ def run_prog(
         max_iterations=MAX_ITERATIONS, threshold=THRESHOLD,
         runner_module=RUNNER_MODULE):
     run_settings = input_settings.copy()
+    run_settings['input_file'] = os.path.join(
+        INPUTS_DIR, run_settings['input_file'])
     run_settings['max_iterations'] = max_iterations
     run_settings['threshold'] = threshold
     elapsed_time = runtime_helper.run_using_runner_module(
