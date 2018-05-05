@@ -6,6 +6,7 @@ from lizard import LOG
 NAME = 'lizard-slayer'
 MODULE_NAME = 'lizard'
 END = '.cs.utexas.edu'
+LD_LIBRARY_PATH = '/tmp/lizard-slayer/'
 
 DEVNULL = open(os.devnull, 'w')
 
@@ -31,8 +32,8 @@ class Cluster(object):
     def start(self):
         """start cluster"""
 
-        cmd = "cd {}; python3 -m {} client -p {} -a {}".format(
-                NAME, MODULE_NAME, self.args.port, self.args.addr)
+        cmd = "cd {}; LD_LIBRARY_PATH={} python3 -m {} client -p {} -a {}".format(
+                LD_LIBRARY_PATH, NAME, MODULE_NAME, self.args.port, self.args.addr)
 
         # start ut cluster using ssh
         for name in self.host_names[:self.args.count]:

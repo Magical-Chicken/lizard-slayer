@@ -109,7 +109,6 @@ def runtime_init(prog_hash, runtime_id):
         'runtime_id': runtime_id,
         'dataset_enc': data['dataset_enc'],
         'global_params_enc': data['global_params_enc'],
-        'data_count': data['data_count'],
     }
     return respond_create_event(
         'init_runtime', event_data,
