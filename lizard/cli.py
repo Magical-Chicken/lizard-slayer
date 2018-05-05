@@ -9,7 +9,7 @@ DESC = 'distributed concurrent data processing platform'
 DEFAULT_PORT_NO = 5000
 DEFAULT_BIND_ADDR = '0.0.0.0'
 
-DEFAULT_HOST_FILE = 'ut_hosts.txt'
+DEFAULT_HOST_FILE = 'config/ut_hosts.txt'
 
 ARG_SETS = {
     'CONNECT': (
@@ -58,7 +58,7 @@ ARG_SETS = {
 SUBCMDS = {
     'client': ('run client program', ('CONNECT', 'CUDA', 'LOG', 'TMPDIR')),
     'server': ('run server program', ('LOG', 'SERVER', 'TMPDIR')),
-    'cluster': ('run cluster program', ('LOG', 'CLUSTER', 'CONNECT')),
+    'cluster': ('run cluster program', ('LOG', 'CLUSTER', 'CONNECT', 'TMPDIR')),
 }
 
 
