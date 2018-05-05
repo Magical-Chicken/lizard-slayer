@@ -7,6 +7,7 @@ import os
 import sys
 import pkgutil
 
+import copy
 from lizard import LOG, PROGRAM_DATA_DIRNAME
 from lizard import util
 
@@ -49,7 +50,7 @@ class UserProg(object):
         Get python module for the user program
         :returns: python module
         """
-        py_name = 'user_program.{}'.format(self.checksum)
+        py_name = 'python_funcs'
         py_file = PROGRAM_SOURCE_FILE_NAMES['python']
         py_path = os.path.join(self.build_dir, py_file)
         py_spec = importlib.util.spec_from_file_location(py_name, py_path)
@@ -66,10 +67,23 @@ class UserProg(object):
         if not self.ready:
             raise ValueError("Cannot get program runtime, program not ready")
         if self.use_c_extention:
-            # FIXME actually load the modules
+            # FIXME FIXME find the file instead of appending path in build 
             py_mod = self.get_program_py_mod()
+            # py_name = 'ext_program.{}'.format(self.checksum)
+            ext_module_name = 'user_program'
+            # py_path = os.path.join(self.build_dir, py_file)
+            # LOG.info("path %s", py_path)
+            # py_spec = importlib.util.spec_from_file_location(py_name, py_path)
+            importlib.invalidate_caches()
+            ext_mod = importlib.import_module(ext_module_name)
+            # py_spec.loader.exec_module(ext_mod)
+
             runtime = UserProgRuntimeCExt(
-                runtime_id, self.hardware, self.data['info'], None, py_mod)
+# <<<<<<< Updated upstream
+                # runtime_id, self.hardware, self.data['info'], None, py_mod)
+# =======
+                runtime_id, self.hardware, self.data['info'], ext_mod, py_mod)
+# >>>>>>> Stashed changes
         else:
             path = os.path.join(self.build_dir, PROGRAM_SHARED_OBJ_NAME)
             prog = ctypes.cdll.LoadLibrary(path)
@@ -494,6 +508,7 @@ class ServerRuntimeCExt(object):
         self.hardware = hardware
         self.py_mod = py_mod
         self.info = info
+        self.prev_global_state = None
         self.global_state = None
         self.global_params = None
         self.top_level_aggregate = None
@@ -528,12 +543,47 @@ class ServerRuntimeCExt(object):
         prepare user program data structures
         :global_params_enc: encoded global params
         """
-        pass
-        # self.global_params = self.py_mod.GlobalParams()
-        # self.global_params.decode(global_params_enc)
-        # FIXME FIXME FIXME
-        # set up python accessible datastructures for agg res and global state
-        # set up python accessible structure to hold dataset while partitioning
+        # FIXME initialize global_state
+        self.global_params = global_params_enc
+
+    def reset_aggregation_result(self):
+        """reset the current top level aggregation result"""
+        self.top_level_aggregate = self.py_mod.init_aggregation_result(
+            self.global_params, aggregation_result=self.top_level_aggregate)
+
+    def aggregate(self, partial_result_enc):
+        """
+        aggregate a partial result into the top level aggregate
+        :partial_result_enc: encoded aggregation result
+        """
+        self.py_mod.aggregate(
+            self.global_params, self.top_level_aggregate, partial_result_enc)
+
+    def update_global_state(self, aggregation_result=None):
+        """
+        update runtime global state object
+        :aggregation_result: aggregation result, if not specified use top level
+        """
+        if not aggregation_result:
+            aggregation_result = self.top_level_aggregate
+        self.global_state = self.py_mod.update_global_state(
+            self.global_params, aggregation_result, self.global_state)
+        
+        if self._terminate():
+            self.done = True
+        self.prev_global_state = copy.deepcopy(self.global_state)
+
+    def _terminate(self):
+        if self.prev_global_state is None:
+            return False
+
+        return self.py_mod.terminate(self.global_params, self.prev_global_state,
+                self.global_state)
+
+    def _initialize_global_state(self):
+        # FIXME FIXME
+        self.global_state = self.py_mod.initialize_global_state(
+                self.global_params)
 
     def partition_data(self, data):
         """
@@ -545,10 +595,12 @@ class ServerRuntimeCExt(object):
         LOG.debug("data size %i", sys.getsizeof(data))
         # FIXME this is a really rough estimate as the final calculation is done
         # after casting to double
-        split_size = sys.getsizeof(data) // client_count
-        LOG.debug("split size %i", split_size)
 
         data_generator = self.py_mod.split_data(data)
+        self.global_params = self.py_mod.data_header(data)
+        # split_size = sys.getsizeof(data) // client_count
+        split_size =  self.global_params[0] // client_count + 1
+        LOG.debug("split size %i", split_size)
         post_datasets = {}
         for client_uuid in client_uuids:
             LOG.info("Splitting data")
@@ -560,15 +612,15 @@ class ServerRuntimeCExt(object):
             split_remaining = split_size
             data_count = 0
 
-            global_params_enc = self.py_mod.data_header(data)
+            LOG.info("global_params %s", self.global_params)
             dataset = []
             # subtract params size
             gpu_mem_remaining = (gpu_mem_remaining -
-                                 sys.getsizeof(global_params_enc))
+                                 sys.getsizeof(self.global_params))
             try:
                 while split_remaining > 0 and gpu_mem_remaining > 0:
                     next_split = next(data_generator)
-                    split_remaining = split_remaining - sys.getsizeof(next_split)
+                    split_remaining = split_remaining - 1
                     gpu_mem_remaining = (gpu_mem_remaining -
                                          sys.getsizeof(next_split))
                     dataset.append(next_split)
@@ -578,6 +630,7 @@ class ServerRuntimeCExt(object):
 
             dataset_enc = [data_count, dataset]
             self.client_datasets[client_uuid] = dataset_enc
+        self._initialize_global_state()
 
             # LOG.debug("client uuid %s", client_uuid)
             # LOG.debug("data count: %i", data_count)
@@ -605,14 +658,17 @@ class UserProgRuntimeCExt(object):
         :py_mod: user program python module
         """
         self.runtime_id = runtime_id
+        # self.iteration = 0
         self.hardware = hardware
         self.info = info
         self.prog = prog
         self.py_mod = py_mod
         self.dataset = None
+        self.data_count = 0
         self.agg_res = None
         self.global_state = None
         self.global_params = None
+        self.pinned_memory = None
         self.blocks = 0
         self.block_size = 0
         # self._configure_functions()
@@ -624,10 +680,22 @@ class UserProgRuntimeCExt(object):
         """
         LOG.info('in load_data')
         LOG.info('first line of data:')
+# <<<<<<< Updated upstream
         # LOG.info(dataset_enc[0])
-        self.data_count = dataset_enc[0]
-        self.dataset = dataset_enc[1]
+        # self.dataset = dataset_enc[1]
         # LOG.info('in load_data')
+# =======
+        # self.dataset = dataset_enc
+        # LOG.info(self.dataset[0])
+        self.dataset = self.py_mod.to_array(dataset_enc[1])
+        self.data_count = dataset_enc[0]
+        # self.data_count = data_count
+        LOG.info('converted to array')
+
+        self.pinned_memory = self.prog.pin_gpu_memory(self.dataset)
+        LOG.info('data count %i', self.data_count)
+        LOG.info('pinned data')
+# >>>>>>> Stashed changes
         # FIXME FIXME FIXME
         # calculate number of blocks and block size for processing dataset
 
@@ -637,12 +705,19 @@ class UserProgRuntimeCExt(object):
         :global_state_enc: encoded global state
         :returns: encoded aggregation result
         """
+        LOG.info("Running iteration")
+        import array
+        self.global_state = array.array('d', global_state_enc)
+        partial_results = self.py_mod.run_iteration(self.global_params, self.data_count,
+                self.global_state, self.pinned_memory, self.dataset)
+        return partial_results
 
     def prepare_datastructures(self, dataset_params_enc):
         """
         prepare user program data structures
         :dataset_params_enc: encoded dataset params
         """
+        self.global_params = dataset_params_enc
 
     def free_datastructures(self):
         """free memory allocated for storing program data"""

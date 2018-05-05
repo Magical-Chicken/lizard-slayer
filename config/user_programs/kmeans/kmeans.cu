@@ -36,9 +36,11 @@ static __global__ void kmeans_iteration_kernel(double *centers, double *points,
     long index = threadIdx.x + blockIdx.x * blockDim.x;
 
     if (index < count) {
+        /*printf("index: %i\n",index);*/
         int cluster = -1; 
         double shortest = DBL_MAX;
         for (int i = 0; i < k; i++) {
+            /*printf("%i\n",index);*/
             TYPE mag = 0;
 
             for (int d = 0; d < dim; d++) {
@@ -54,11 +56,11 @@ static __global__ void kmeans_iteration_kernel(double *centers, double *points,
         }
         /*printf("kernel: point %lf\n", points[index]);*/
         /*printf("kernel: cluster %i\n", cluster);*/
+        atomicAdd(&count_results[cluster], 1);
          
         for (int d = 0; d < dim; d++) {
             atomicAdd(&partial_results[cluster * dim + d], points[index * dim + d]);
-            atomicAdd(&count_results[cluster], 1);
-            /*printf("results: %lf\n", results[cluster *dim+d]);*/
+            /*printf("results: %lf\n", partial_results[cluster *dim+d]);*/
         }
     }
 }
@@ -78,18 +80,26 @@ static __global__ void aggregate_kernel(void *buf, long count, void *result) {
 }
 
 void kmeans_iteration(double *centers, double *dev_points, double *dev_partial_results, 
-        int *dev_count_results, long size, long itemsize, int k, int dim, int Dg, int Db, int Ns) {
+        int *dev_count_results, int count, int k, int dim, int Dg, int Db, int Ns) {
     double *dev_centers = NULL;
+    printf("k: %i\n", k);
+    printf("dim: %i\n", dim);
+    printf("count: %i\n", count);
+    printf("Dg: %i\n", Dg);
+    printf("Db: %i\n", Db);
+    printf("Ns: %i\n", Ns);
 
-    cudaMalloc(&dev_centers, itemsize * k * dim);
-    cudaMemcpy(dev_centers, centers, itemsize * k * dim, cudaMemcpyHostToDevice);
+    /*cudaMalloc(&dev_centers, itemsize * k * dim);*/
+    cudaMalloc(&dev_centers, sizeof(double) * k * dim);
+    cudaMemcpy(dev_centers, centers, sizeof(double) * k * dim, cudaMemcpyHostToDevice);
 
     /*printf("count: %i\n", size / itemsize/ dim);*/
     /*for (int i = 0; i < 4; i++) */
         /*printf("%lf\n", centers[i]);*/
 
+    printf("befpreo kernel\n");
     kmeans_iteration_kernel<<<Dg, Db, Ns>>>(dev_centers, dev_points,
-            dev_partial_results, dev_count_results, size / itemsize / dim, dim, k);
+            dev_partial_results, dev_count_results, count, dim, k);
 
     cudaFree(dev_centers);
 }

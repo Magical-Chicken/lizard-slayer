@@ -32,9 +32,14 @@ static PyObject *cuda_pin_gpu_memory(PyObject *self, PyObject *data) {
     if(PyObject_GetBuffer(data, &view, 0) != 0)
         return NULL;
 
+    printf("VIEW LENGTH %i\n", view.len);
+
     // FIXME ERROR CHECK
-    deviceMalloc(&pinned_mem, view.len);
-    cudaMemcpyToDevice(pinned_mem, view.buf, view.len);
+    if (!deviceMalloc(&pinned_mem, view.len))
+        return NULL;
+    if (!cudaMemcpyToDevice(pinned_mem, view.buf, view.len)) {
+        return NULL;
+    }
     // FIXME destructor for capsule should not be needed
     return PyCapsule_New(pinned_mem, DEVICE_MEMORY, NULL);
 }
@@ -89,9 +94,11 @@ static PyObject *cuda_kmeans_iteration(
     Py_buffer centers_view, points_view;
     Py_buffer partial_results_view, count_results_view;
     int k, dim, Dg, Db, Ns;
+    int count;
 
     TYPE *dev_points = NULL, *dev_partial_results = NULL;
     int *dev_count_results = NULL;
+    bool using_capsule = false;
     printf("cuda_kmeans_iteration\n");
 
     static char *kwlist[] = {
@@ -99,6 +106,7 @@ static PyObject *cuda_kmeans_iteration(
         "points", 
         "partial_results", 
         "count_results", 
+        "count", 
         "k", 
         "dim", 
         "Dg", 
@@ -106,11 +114,12 @@ static PyObject *cuda_kmeans_iteration(
         "Ns", 
         NULL};
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OOOO|iiiii", kwlist,
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OOOO|iiiiii", kwlist,
                 &centers, 
                 &points, 
                 &partial_results, 
                 &count_results, 
+                &count,
                 &k, 
                 &dim, 
                 &Dg, 
@@ -121,8 +130,24 @@ static PyObject *cuda_kmeans_iteration(
     if(PyObject_GetBuffer(centers, &centers_view, 0) != 0)
         return NULL;
 
-    if(PyObject_GetBuffer(points, &points_view, 0) != 0)
+    if(PyCapsule_IsValid(points, DEVICE_MEMORY)) 
+    {
+        printf("ISvalud\n");
+        using_capsule = true;
+        void *p = PyCapsule_GetPointer(points, DEVICE_MEMORY);
+        printf("ISvalud\n");
+        //deviceMalloc((void**)&dev_points, count * dim * sizeof(double));
+        //cudaMemcpyToDevice(dev_points, p, count * dim * sizeof(double));
+        dev_points = (double* )p;
+        printf("ISvalud\n");
+
+    } else if(PyObject_GetBuffer(points, &points_view, 0) != 0) {
         return NULL;
+    } else {
+        printf("not ISvalud\n");
+        deviceMalloc((void**)&dev_points, points_view.len);
+        cudaMemcpyToDevice(dev_points, points_view.buf, points_view.len);
+    }
 
     if(PyObject_GetBuffer(partial_results, &partial_results_view, 0) != 0)
         return NULL;
@@ -130,8 +155,6 @@ static PyObject *cuda_kmeans_iteration(
     if(PyObject_GetBuffer(count_results, &count_results_view, 0) != 0)
         return NULL;
 
-    deviceMalloc((void**)&dev_points, points_view.len);
-    cudaMemcpyToDevice(dev_points, points_view.buf, points_view.len);
 
     deviceMalloc((void**)&dev_partial_results, partial_results_view.len);
     cudaMemcpyToDevice(
@@ -143,13 +166,15 @@ static PyObject *cuda_kmeans_iteration(
     cudaMemcpyToDevice(
             dev_count_results, count_results_view.buf, count_results_view.len);
 
+        printf("befpreo terate: %i\n",count);
     kmeans_iteration(
             (TYPE*)centers_view.buf,
             dev_points,
             dev_partial_results,
             dev_count_results,
-            points_view.len,
-            points_view.itemsize,
+            count,
+            //points_view.len,
+            //points_view.itemsize,
             k, dim, Dg, Db, Ns);
 
     cudaMemcpyToHost(
@@ -163,9 +188,11 @@ static PyObject *cuda_kmeans_iteration(
 
     // release the buffer view
     PyBuffer_Release(&centers_view);
-    PyBuffer_Release(&points_view);
+    if (!using_capsule)
+        PyBuffer_Release(&points_view);
     PyBuffer_Release(&partial_results_view);
     PyBuffer_Release(&count_results_view);
+        printf("befpreo free\n");
 
     // free cuda memory
     deviceFree(dev_partial_results);

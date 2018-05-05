@@ -42,7 +42,6 @@ def handle_event_init_runtime(event):
     """
     runtime_id = event.data['runtime_id']
     dataset_enc = event.data['dataset_enc']
-    data_count = event.data['data_count']
     prog_checksum = event.data['checksum']
     global_params_enc = event.data['global_params_enc']
     with client.client_access() as c:
@@ -50,7 +49,6 @@ def handle_event_init_runtime(event):
     runtime = program.get_new_program_runtime(runtime_id)
     runtime.prepare_datastructures(global_params_enc)
     runtime.load_data(dataset_enc)
-    LOG.debug("data count: %i", data_count)
     LOG.info('Loaded client program instance')
     return {}
 

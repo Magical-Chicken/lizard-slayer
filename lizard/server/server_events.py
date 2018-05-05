@@ -5,6 +5,7 @@ import threading
 
 from lizard import LOG
 from lizard import events, server, user_prog, util
+from lizard.server import remote_event
 
 
 class ServerEventType(enum.Enum):
@@ -69,7 +70,8 @@ def handle_event_run_program(event):
             raise ValueError('{}: error running prog iteration'.format(client))
         with aggregation_lock:
             runtime.aggregate(event_props['result']['aggregation_result_enc'])
-
+    runtime.reset_aggregation_result()
+    iteration_count = 0
     while True:
         post_data = {
             'runtime_id': runtime_id,
@@ -86,10 +88,11 @@ def handle_event_run_program(event):
         runtime.update_global_state()
         runtime.reset_aggregation_result()
         LOG.debug('Completed iteration for user program: %s', program)
+        iteration_count = iteration_count + 1
         if runtime.done:
             break
 
-    LOG.info('Finished running user program: %s', program)
+    LOG.info('Finished running user program: %s %i', program, iteration_count)
     return {
         'end_aggregate': runtime.top_level_aggregate_encoded,
         'end_global_state': runtime.global_state_encoded,
