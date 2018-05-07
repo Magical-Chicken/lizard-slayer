@@ -41,10 +41,16 @@ def run_using_runner_module(
     runner_mod = importlib.import_module(runner_module_name)
     global_params = runner_mod.init_global_params(run_settings)
     dataset = runner_mod.init_dataset(global_params, run_settings)
-    event_data = {
-        'global_params_enc': global_params.encode(None),
-        'dataset_enc': dataset.encode(global_params),
-    }
+    if runner_mod.C_EXTENSION:
+        event_data = {
+            'global_params_enc': global_params,
+            'dataset_enc': dataset,
+        }
+    else:
+        event_data = {
+            'global_params_enc': global_params.encode(None),
+            'dataset_enc': dataset.encode(global_params),
+        }
     path = os.path.join(server_address, 'runtimes', checksum)
     req_data = requests.post(path, json=event_data).json()
     result_data = poll_for_event_complete(server_address, req_data['event_id'])

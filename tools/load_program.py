@@ -10,6 +10,7 @@ import requests
 import sys
 import yaml
 
+import tools.profile_kmeans
 try:
     from lizard import runtime_helper
 except ImportError:
@@ -44,20 +45,10 @@ def register_program(server_address, config_data):
     runtime_helper.poll_for_event_complete(server_address, event_id)
     return checksum
 
-def run_program(server_address, checksum, data_file):
-    endpoint = os.path.join(server_address, 'runtimes', checksum)
-    with open(data_file, 'r') as fp:
-        data = fp.read()
-    post_data = {
-        'dataset_enc': data,
-        'global_params_enc': 0,
-    }
-    requests.post(endpoint, json=post_data)
 
 def main():
     program_directory = sys.argv[1]
     server_address = sys.argv[2]
-    data_file = sys.argv[3]
     config_file = os.path.join(program_directory, CONFIG_FILENAME)
     if not os.path.isdir(program_directory) or not os.path.exists:
         print("Bad program directory: {}".format(program_directory))
@@ -66,8 +57,9 @@ def main():
     checksum = register_program(server_address, config_data)
     print("Program registered, checksum: {}".format(checksum))
 
-    print("Running program")
-    run_program(server_address, checksum, data_file)
+    # print("Running program")
+    tools.profile_kmeans.run_and_dump('http://localhost:5000', checksum,
+    'out.csv', iter_counts=5)
     return 0
 
 

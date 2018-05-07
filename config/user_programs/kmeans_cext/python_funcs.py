@@ -48,12 +48,12 @@ def initialize_global_state(params):
     k = params[2] # k
     # centers = array.array('d', (random.random() for _ in range(k * dim)))
     centers = [random.random() for _ in range(k * dim)]
-    return centers
+    return [0, centers]
 
 
-def to_array(global_state):
+def to_array(centers):
     
-    a = array.array('d', chain.from_iterable(global_state))
+    a = array.array('d', chain.from_iterable(centers))
     return a
      
 
@@ -109,13 +109,16 @@ def update_global_state(params, aggregation_result, global_state):
     dim = params[1] # dim
     k = params[2] # k
 
+    centers = global_state[1]
+
     for i in range(k):
         if aggregation_result[0][i] == 0:
             for d in range(dim):
-                global_state[i*dim + d] = random.random()
+                centers[i*dim + d] = random.random()
         else:
             for d in range(dim):
-                global_state[i*dim + d] = aggregation_result[1][i*dim + d] / aggregation_result[0][i]
+                centers[i*dim + d] = aggregation_result[1][i*dim + d] / aggregation_result[0][i]
+    global_state[0] = global_state[0] + 1
 
     return global_state
 
@@ -123,15 +126,24 @@ def update_global_state(params, aggregation_result, global_state):
 def terminate(params, prev_global_state, global_state):
     dim = params[1] # dim
     k = params[2] # k
+    max_iterations = params[3] # k
+    threshold = params[4] # k
+
+    current_iteration = global_state[0]
+    centers = global_state[1]
+
+    if current_iteration > max_iterations:
+        return True
+
 
     for i in range(k):
         mag = 0
         for d in range(dim):
-            difference = prev_global_state[i*dim + d] - global_state[i*dim + d]
+            difference = prev_global_state[1][i*dim + d] - centers[i*dim + d]
             mag = mag + difference * difference
         
         distance = math.sqrt(mag)
-        if distance > 0.0000001:
+        if distance > threshold:
             return False
 
     return True

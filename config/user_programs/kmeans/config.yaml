@@ -2,10 +2,9 @@ info:
     # NOTE: for best results, run with threshold set to 0.0000001
     name: K-Means
     version: 0.1
-    py_c_extention: true
+    py_c_extention: false
 sources:
     python: python_funcs.py
-    cpp: kmeans_module.cpp
-    header: kmeans.h
-    cuda: kmeans.cu
+    header: program.h
+    cuda: kernel.cu
 code: {}

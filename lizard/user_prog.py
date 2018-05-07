@@ -79,11 +79,7 @@ class UserProg(object):
             # py_spec.loader.exec_module(ext_mod)
 
             runtime = UserProgRuntimeCExt(
-# <<<<<<< Updated upstream
-                # runtime_id, self.hardware, self.data['info'], None, py_mod)
-# =======
                 runtime_id, self.hardware, self.data['info'], ext_mod, py_mod)
-# >>>>>>> Stashed changes
         else:
             path = os.path.join(self.build_dir, PROGRAM_SHARED_OBJ_NAME)
             prog = ctypes.cdll.LoadLibrary(path)
@@ -225,28 +221,6 @@ class UserProg(object):
         else:
             LOG.debug('No python c extention for user program')
             self.ready = True
-
-    def task_header(self, data):
-        """
-        splits the data into tasks using user defined functions
-        :data: JSONEncoder supported data
-        :size: returned task should fit inside size bytes
-        :returns: generator of tasks
-        """
-        # FIXME
-        import python_funcs
-        return python_funcs.data_header(data)
-
-    def task_data(self, data):
-        """
-        splits the data into tasks using user defined functions
-        :data: JSONEncoder supported data
-        :size: returned task should fit inside size bytes
-        :returns: generator of tasks
-        """
-        # FIXME
-        import python_funcs
-        return python_funcs.split_data(data)
 
     @property
     def properties(self):
@@ -543,7 +517,6 @@ class ServerRuntimeCExt(object):
         prepare user program data structures
         :global_params_enc: encoded global params
         """
-        # FIXME initialize global_state
         self.global_params = global_params_enc
 
     def reset_aggregation_result(self):
@@ -597,8 +570,7 @@ class ServerRuntimeCExt(object):
         # after casting to double
 
         data_generator = self.py_mod.split_data(data)
-        self.global_params = self.py_mod.data_header(data)
-        # split_size = sys.getsizeof(data) // client_count
+        LOG.info(self.global_params)
         split_size =  self.global_params[0] // client_count + 1
         LOG.debug("split size %i", split_size)
         post_datasets = {}
@@ -680,22 +652,15 @@ class UserProgRuntimeCExt(object):
         """
         LOG.info('in load_data')
         LOG.info('first line of data:')
-# <<<<<<< Updated upstream
         # LOG.info(dataset_enc[0])
-        # self.dataset = dataset_enc[1]
-        # LOG.info('in load_data')
-# =======
-        # self.dataset = dataset_enc
-        # LOG.info(self.dataset[0])
+        # LOG.info(dataset_enc[1][0])
         self.dataset = self.py_mod.to_array(dataset_enc[1])
         self.data_count = dataset_enc[0]
-        # self.data_count = data_count
         LOG.info('converted to array')
 
         self.pinned_memory = self.prog.pin_gpu_memory(self.dataset)
         LOG.info('data count %i', self.data_count)
         LOG.info('pinned data')
-# >>>>>>> Stashed changes
         # FIXME FIXME FIXME
         # calculate number of blocks and block size for processing dataset
 
@@ -706,8 +671,9 @@ class UserProgRuntimeCExt(object):
         :returns: encoded aggregation result
         """
         LOG.info("Running iteration")
+        # FIXME move into py_mod
         import array
-        self.global_state = array.array('d', global_state_enc)
+        self.global_state = array.array('d', global_state_enc[1])
         partial_results = self.py_mod.run_iteration(self.global_params, self.data_count,
                 self.global_state, self.pinned_memory, self.dataset)
         return partial_results
