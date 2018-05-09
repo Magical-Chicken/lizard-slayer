@@ -11,6 +11,7 @@ class ClientEventType(enum.Enum):
     REGISTER_PROG = 'register_prog'
     RUN_ITERATION = 'run_iteration'
     INIT_RUNTIME = 'init_runtime'
+    DELETE_RUNTIME = 'delete_runtime'
 
 
 def handle_event_run_iteration(event):
@@ -53,6 +54,24 @@ def handle_event_init_runtime(event):
     return {}
 
 
+def handle_event_delete_runtime(event):
+    """
+    handle 'delete_runtime' event
+    data must include:
+        - 'runtime_id',
+        - 'checksum',
+    :event: event to handle
+    :returns: event result
+    """
+    runtime_id = event.data['runtime_id']
+    prog_checksum = event.data['checksum']
+    with client.client_access() as c:
+        program = c.user_programs[prog_checksum]
+        runtime = program.program_runtimes.pop(runtime_id)
+    runtime.free_datastructures()
+    return {}
+
+
 def handle_event_register_prog(event):
     """
     handle 'register_prog' event
@@ -89,6 +108,7 @@ CLIENT_EVENT_HANDLER_MAP = {
     ClientEventType.REGISTER_PROG: handle_event_register_prog,
     ClientEventType.RUN_ITERATION: handle_event_run_iteration,
     ClientEventType.INIT_RUNTIME: handle_event_init_runtime,
+    ClientEventType.DELETE_RUNTIME: handle_event_delete_runtime,
 }
 
 

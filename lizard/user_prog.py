@@ -687,3 +687,4 @@ class UserProgRuntimeCExt(object):
 
     def free_datastructures(self):
         """free memory allocated for storing program data"""
+        self.prog.unpin_gpu_memory(self.pinned_memory)

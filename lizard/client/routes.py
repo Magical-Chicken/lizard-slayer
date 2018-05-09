@@ -115,6 +115,24 @@ def runtime_init(prog_hash, runtime_id):
         send_remote_event=data.get('send_remote_event'))
 
 
+@APP.route('/runtimes/<prog_hash>/<runtime_id>/cleanup', methods=['POST'])
+def runtime_cleanup(prog_hash, runtime_id):
+    """
+    POST /runtimes/<prog_hash>/<runtime_id>/cleanup: clean up program runtime
+    :prog_hash: program checksum/identifier
+    :runtime_id: runtime uuid
+    :returns: flask response
+    """
+    data = request.get_json()
+    event_data = {
+        'checksum': prog_hash,
+        'runtime_id': runtime_id,
+    }
+    return respond_create_event(
+        'delete_runtime', event_data,
+        send_remote_event=data.get('send_remote_event'))
+
+
 @APP.route('/runtimes/<prog_hash>/<runtime_id>/iterate', methods=['POST'])
 def run_iteration(prog_hash, runtime_id):
     """

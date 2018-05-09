@@ -28,6 +28,7 @@ def handle_event_run_program(event):
     global_params_enc = event.data['global_params_enc']
     init_path = os.path.join('/runtimes', prog_checksum, runtime_id)
     iterate_path = os.path.join(init_path, 'iterate')
+    cleanup_path = os.path.join(init_path, 'cleanup')
     wakeup_ev = threading.Event()
 
     def multi_callback_wakeup(event_props):
@@ -91,6 +92,22 @@ def handle_event_run_program(event):
         iteration_count = iteration_count + 1
         if runtime.done:
             break
+
+    LOG.info('Cleaning up...')
+    def runtime_cleanup_callback(client, event_props):
+        if event_props['status'] != events.EventStatus.SUCCESS.value:
+            raise ValueError('{}: error on prog runtime clean up'.format(client))
+    post_data = {
+        'runtime_id': runtime_id,
+        'checksum': prog_checksum,
+        'send_remote_event': True,
+    }
+    with server.state_access() as s:
+        s.post_all(
+            cleanup_path, post_data, callback_func=runtime_cleanup_callback,
+            multi_callback_func=multi_callback_wakeup)
+    wakeup_ev.wait(timeout=60)
+    wakeup_ev.clear()
 
     LOG.info('Finished running user program: %s %i', program, iteration_count)
     return {
