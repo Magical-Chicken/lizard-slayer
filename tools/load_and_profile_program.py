@@ -10,13 +10,14 @@ import requests
 import sys
 import yaml
 
-import tools.profile_kmeans
 try:
     from lizard import runtime_helper
 except ImportError:
     parent_dir = os.path.join(os.path.dirname(__file__), os.pardir)
     sys.path.append(os.path.abspath(parent_dir))
     from lizard import runtime_helper
+
+import tools.profile_kmeans
 
 CONFIG_FILENAME = 'config.yaml'
 
@@ -58,7 +59,7 @@ def main():
     print("Program registered, checksum: {}".format(checksum))
 
     # print("Running program")
-    tools.profile_kmeans.run_and_dump('http://localhost:5000', checksum,
+    tools.profile_kmeans.run_and_dump(server_address, checksum,
     'out.csv', iter_counts=5)
     return 0
 
