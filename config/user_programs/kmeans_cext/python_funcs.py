@@ -146,4 +146,4 @@ def terminate(params, prev_global_state, global_state):
         if distance > threshold:
             return False
 
-    return True
+    return False
