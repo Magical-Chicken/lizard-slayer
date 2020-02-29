@@ -7,20 +7,28 @@ import queue
 from lizard import LOG
 from lizard import cli, client, cluster, hardware_discovery, server, util
 from lizard.client import client_worker
+<<<<<<< HEAD
 from lizard.server import server_worker, server_util
+=======
+from lizard.server import remote_event, server_worker, server_util
+>>>>>>> ef9b13b186c1a356f50a36e78ad91a3ccff76392
 
 
-def run_client(args):
+def run_client(args, tmpdir):
     """
     entrypoint for client
     :args: parsed cmdline args
+    :tmpdir: temporary directory
     :returns: 0 on success
     """
     # scan hardware
-    hardware = hardware_discovery.scan_hardware(args)
-    LOG.debug('hardware scan found: %s', hardware)
+    hardware = hardware_discovery.scan_hardware(args, tmpdir)
     # create client
+<<<<<<< HEAD
     client.create_client(args, hardware)
+=======
+    client.create_client(args, tmpdir, hardware)
+>>>>>>> ef9b13b186c1a356f50a36e78ad91a3ccff76392
     # automatically find available port
     client_port = util.get_free_port()
     # start client api server
@@ -43,14 +51,17 @@ def run_client(args):
     return 0
 
 
-def run_server(args):
+def run_server(args, tmpdir):
     """
     entrypoint for server
     :args: parsed cmdline args
+    :tmpdir: temporary directory
     :returns: 0 on success
     """
     # create server state
-    server.create_state(args)
+    server.create_state(args, tmpdir)
+    # init remote event system
+    remote_event.create_remote_events()
     # start api server
     call = functools.partial(
         server.APP.run, debug=False, host=args.host, port=args.port)
@@ -67,18 +78,23 @@ def run_server(args):
     return 0
 
 
-def run_cluster(args):
+def run_cluster(args, tmpdir):
     """
     entrypoint for cluster
     :args: parsed cmdline args
+    :tmpdir: temporary directory
     :returns: 0 on success
     """
     # create cluster state
-    c = cluster.Cluster(args)
+    c = cluster.Cluster(args, tmpdir)
     # start cluster
     try:
         c.start()
     except KeyboardInterrupt:
+<<<<<<< HEAD
+=======
+        # FIXME will kill all python processes including server
+>>>>>>> ef9b13b186c1a356f50a36e78ad91a3ccff76392
         c.kill()
     return 0
 
@@ -108,8 +124,9 @@ def main():
     LOG.debug('logging system init')
     LOG.debug('running with args: %s', args)
 
-    # exit success
-    return subcmd_handlers[args.subcmd](args)
+    # create tmpdir and run handler
+    with util.TempDir(preserve=args.keep_tmpdir) as tmpdir:
+        return subcmd_handlers[args.subcmd](args, tmpdir)
 
 
 if __name__ == "__main__":

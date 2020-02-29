@@ -1,0 +1,81 @@
+On branch master
+Your branch and 'origin/master' have diverged,
+and have 13 and 143 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+
+Changes to be committed:
+
+	deleted:    DESIGN
+	modified:   README.md
+	new file:   config/user_programs/demo_ctypes/config.yaml
+	new file:   config/user_programs/demo_ctypes/datasets/large-n2048-d8
+	new file:   config/user_programs/demo_ctypes/datasets/small-n16-d3
+	new file:   config/user_programs/demo_ctypes/kernel.cu
+	new file:   config/user_programs/demo_ctypes/program.h
+	new file:   config/user_programs/demo_ctypes/python_funcs.py
+	new file:   config/user_programs/demo_ctypes/runner.py
+	new file:   config/user_programs/empty/config.yaml
+	new file:   config/user_programs/empty/empty.h
+	new file:   config/user_programs/empty/empty.py
+	new file:   config/user_programs/empty/empty_cmodule.cpp
+	new file:   config/user_programs/empty/kernel.cu
+	new file:   config/user_programs/kmeans/config.yaml
+	new file:   config/user_programs/kmeans/datasets/random-n16384-d24-c16.txt
+	new file:   config/user_programs/kmeans/datasets/random-n2048-d16-c16.txt
+	new file:   config/user_programs/kmeans/datasets/random-n65536-d32-c16.txt
+	new file:   config/user_programs/kmeans/kernel.cu
+	new file:   config/user_programs/kmeans/program.h
+	new file:   config/user_programs/kmeans/python_funcs.py
+	new file:   config/user_programs/kmeans/runner.py
+	new file:   config/user_programs/kmeans_cext/config.yaml
+	new file:   config/user_programs/kmeans_cext/kmeans.cu
+	new file:   config/user_programs/kmeans_cext/kmeans.h
+	new file:   config/user_programs/kmeans_cext/kmeans_module.cpp
+	new file:   config/user_programs/kmeans_cext/python_funcs.py
+	new file:   config/user_programs/kmeans_cext/runner.py
+	new file:   config/ut_hosts.txt
+	modified:   lizard/__init__.py
+	modified:   lizard/cli.py
+	modified:   lizard/client/__init__.py
+	new file:   lizard/client/client_events.py
+	modified:   lizard/client/client_worker.py
+	new file:   lizard/data/build_files/Makefile
+	new file:   lizard/data/build_files/setup.py
+	new file:   lizard/data/hw_discovery/config.json
+	new file:   lizard/data/hw_discovery/kernel.cu
+	new file:   lizard/data/hw_discovery/program.h
+	modified:   lizard/hardware_discovery.py
+	new file:   lizard/runtime_helper.py
+	modified:   lizard/server/__init__.py
+	new file:   lizard/server/remote_event.py
+	new file:   lizard/server/server_events.py
+	modified:   lizard/server/server_worker.py
+	new file:   lizard/user_prog.py
+	new file:   lizard/user_prog_resources.py
+	modified:   requirements.txt
+	new file:   tools/load_and_profile_program.py
+	new file:   tools/profile_kmeans.py
+	new file:   tools/profile_kmeans_cext.py
+	modified:   tox.ini
+
+Unmerged paths:
+  (use "git add/rm <file>..." as appropriate to mark resolution)
+
+	both modified:   lizard/__main__.py
+	both modified:   lizard/client/lizard_client.py
+	both modified:   lizard/client/routes.py
+	both modified:   lizard/cluster/__init__.py
+	both modified:   lizard/events.py
+	both modified:   lizard/server/routes.py
+	both modified:   lizard/server/state.py
+	both modified:   lizard/util.py
+	both modified:   setup.py
+	deleted by them: ut_hosts.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	mergining.txt
+

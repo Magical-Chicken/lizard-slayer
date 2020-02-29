@@ -1,6 +1,6 @@
 from lizard import LOG
 from lizard.client import CLIENT_QUEUE
-from lizard.events import ClientEventType
+from lizard.client.client_events import ClientEventType
 
 
 class ClientWorker(object):
@@ -20,7 +20,7 @@ class ClientWorker(object):
         if event.event_type == ClientEventType.REQ_SHUTDOWN:
             self.shutdown_scheduled = True
         else:
-            raise NotImplementedError
+            event.handle()
 
     def run(self):
         """

@@ -2,6 +2,7 @@ from flask import Response, request
 import json
 
 from lizard.server import APP
+from lizard.server import remote_event, server_events
 from lizard import server, events
 from lizard import LOG
 
@@ -35,8 +36,8 @@ def respond_create_event(event_type_name, data):
     :returns: flask response
     """
     e_type = events.get_event_type_by_name(
-        event_type_name, events.ServerEventType)
-    event = events.ServerEvent(e_type, data)
+        event_type_name, server_events.ServerEventType)
+    event = server_events.ServerEvent(e_type, data)
     server.SERVER_QUEUE.put_nowait(event)
     return respond_json({'event_id': event.event_id})
 
@@ -89,14 +90,67 @@ def client_item(client_id):
     """
     if request.method == 'GET':
         with server.state_access() as state:
-            client = state.clients[client_id]
-            client_data = client.properties if client is not None else {}
-        return respond_json(client_data, status=200 if client_data else 404)
+            client = state.clients.get(client_id)
+        return (respond_json(client.properties) if client else
+                respond_error(404))
     elif request.method == 'DELETE':
         with server.state_access() as state:
+<<<<<<< HEAD
             res = state.clients.pop(client_id, None)
             LOG.info('Deleted client: %s', res)
         return Response("ok") if res is not None else respond_error(404)
+=======
+            client = state.unregister_client(client_id)
+        return Response("ok") if client is not None else respond_error(404)
+
+
+@APP.route('/programs', methods=['GET', 'POST'])
+def programs():
+    """
+    GET,POST /programs: register or list programs
+    :returns: flask response
+    """
+    if request.method == 'POST':
+        event_data = request.get_json()
+        if not all(n in event_data for n in ('name', 'data', 'checksum')):
+            return respond_error(400)
+        return respond_create_event('register_prog', event_data)
+    else:
+        with server.state_access() as s:
+            prog_hashes = list(s.registered_progs.keys())
+        return respond_json({'programs': prog_hashes})
+
+
+@APP.route('/programs/<prog_hash>', methods=['GET', 'DELETE'])
+def program_item(prog_hash):
+    """
+    GET,DELETE /programs/<prog_hash>: query programs
+    :prog_hash: program checksum/identifier
+    :returns: flask response
+    """
+    if request.method == 'GET':
+        with server.state_access() as s:
+            prog = s.registered_programs.get(prog_hash)
+        return respond_json(prog.properties) if prog else respond_error(404)
+    else:
+        raise NotImplementedError
+
+
+@APP.route('/runtimes/<prog_hash>', methods=['POST'])
+def runtimes_new(prog_hash):
+    """
+    POST /runtimes/<prog_hash>: create new program runtime, and run program
+    :prog_hash: program checksum/identifier
+    :returns: flask response
+    """
+    data = request.get_json()
+    event_data = {
+        'checksum': prog_hash,
+        'dataset_enc': data['dataset_enc'],
+        'global_params_enc': data['global_params_enc'],
+    }
+    return respond_create_event('run_program', event_data)
+>>>>>>> ef9b13b186c1a356f50a36e78ad91a3ccff76392
 
 
 @APP.route('/events/<event_id>', methods=['GET'])
@@ -109,3 +163,20 @@ def event_item(event_id):
     with server.SERVER_EVENT_MAP_LOCK:
         event = server.SERVER_EVENT_MAP.get(event_id)
     return respond_json(event.properties) if event else respond_error(404)
+<<<<<<< HEAD
+=======
+
+
+@APP.route('/remote_event/<client_id>/<event_id>', methods=['PUT'])
+def remote_event_item(client_id, event_id):
+    """
+    PUT: /remote_event/<client_id>/<event_id>: update remote event
+    :client_id: client id of remote event origin
+    :event_id: event state to update
+    :returns: flask response
+    """
+    event_props = request.get_json()
+    with remote_event.remote_events_access() as r:
+        r.store_event(client_id, event_id, event_props)
+    return "ok"
+>>>>>>> ef9b13b186c1a356f50a36e78ad91a3ccff76392

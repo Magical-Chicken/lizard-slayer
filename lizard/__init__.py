@@ -15,3 +15,5 @@ def _configure_log():
 
 
 LOG = _configure_log()
+TMPDIR = None
+PROGRAM_DATA_DIRNAME = 'data'

@@ -21,15 +21,16 @@ CLIENT_EVENT_MAP_LOCK = threading.Lock()
 CLIENT_QUEUE = queue.Queue()
 
 
-def create_client(args, hardware):
+def create_client(args, tmpdir, hardware):
     """
     Create client object
     :args: parsed cmdline rags
+    :tmpdir: temporary directory
     :hardware: hardware info dict
     """
     with CLIENT_LOCK:
         global CLIENT
-        CLIENT = lizard_client.LizardClient(args, hardware)
+        CLIENT = lizard_client.LizardClient(args, tmpdir, hardware)
 
 
 @contextlib.contextmanager
